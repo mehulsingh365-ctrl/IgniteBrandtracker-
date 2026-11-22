@@ -1,0 +1,10 @@
+{
+  "_note": "Google News searches per brand (free RSS, no key). Edit the words in quotes to widen or narrow coverage.",
+  "Vichy": ["\"Vichy Laboratoires\"", "Vichy skincare", "Vichy Dercos"],
+  "La Roche-Posay": ["\"La Roche-Posay\""],
+  "Avène": ["\"Eau Thermale Avène\"", "Avène skincare"],
+  "Bioderma": ["Bioderma"],
+  "CeraVe": ["CeraVe"],
+  "Eucerin": ["Eucerin"],
+  "Klorane": ["Klorane"]
+}
