@@ -19,5 +19,5 @@
 
 ## Data files (in `data/`)
 `competitor_posts.csv`, `kpis.csv`, `keywords.csv`, `hashtags.csv`, `listening.csv`, `products.csv`,
-`calendar.csv`, `insights.csv` — same columns as in `js/sample-data.js`. Any tab without a file falls back
-to sample data, and the banner shows how many sources are live.
+`calendar.csv`, `insights.csv`, `accounts.csv`. Any tab without a file shows "Not tracked yet" on the site.
+There is no sample data.

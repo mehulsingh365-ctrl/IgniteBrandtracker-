@@ -1,5 +1,5 @@
 /* =====================================================================
-   DATA LOADER — reads published Google Sheet CSVs, falls back to sample.
+   DATA LOADER — reads the CSV files in data/. No sample data, ever.
    ===================================================================== */
 
 (function () {
@@ -44,31 +44,22 @@
     return parseCSV(await res.text());
   }
 
-  // Load order: 1) Google Sheet link in config.js  2) data/<tab>.csv in this repo
-  // (updated automatically by the scheduled runs)  3) built-in sample data.
-  async function loadTab(name, url) {
+  // Every tab is read from data/<tab>.csv in this site. There is no sample fallback:
+  // a missing or empty file means "no data yet", and the page says so.
+  async function loadTab(name) {
     try {
       const rows = await fetchCSV(`data/${name}.csv`);
-      if (rows.length && !url) return { rows, live: true };
-    } catch (e) { /* no repo file for this tab yet */ }
-    if (url) {
-      try {
-        const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) throw new Error(res.status);
-        const rows = parseCSV(await res.text());
-        if (rows.length) return { rows, live: true };
-      } catch (e) {
-        console.warn(`[Ignite] Could not load "${name}" from the sheet, using sample data.`, e);
-      }
+      return { rows, live: rows.length > 0 };
+    } catch (e) {
+      return { rows: [], live: false };
     }
-    return { rows: parseCSV(window.SAMPLE_CSV[name] || ""), live: false };
   }
 
+  const TABS = ["competitor_posts", "accounts", "insights", "calendar", "keywords", "hashtags", "listening"];
   window.loadPulseData = async function () {
-    const tabs = Object.keys(window.SAMPLE_CSV);
-    const results = await Promise.all(tabs.map(t => loadTab(t, window.PULSE_CONFIG.sheets[t])));
-    const data = {}; let liveCount = 0;
-    tabs.forEach((t, i) => { data[t] = results[i].rows; if (results[i].live) liveCount++; });
+    const results = await Promise.all(TABS.map(t => loadTab(t)));
+    const data = { kpis: [], products: [] };
+    TABS.forEach((t, i) => { data[t] = results[i].rows; });
 
     // Derived fields
     data.competitor_posts.forEach(p => {
@@ -81,7 +72,13 @@
       }
     });
 
-    data._meta = { liveCount, totalTabs: tabs.length, isSample: liveCount < tabs.length, isAllSample: liveCount === 0 };
+    const dates = data.competitor_posts.map(p => p.date).concat(data.accounts.map(a => a.date)).filter(Boolean).sort();
+    data._meta = {
+      lastUpdated: dates[dates.length - 1] || "",
+      firstPost: data.competitor_posts.map(p => p.date).filter(Boolean).sort()[0] || "",
+      brands: [...new Set(data.competitor_posts.map(p => p.brand))],
+      platforms: [...new Set(data.competitor_posts.map(p => p.platform))]
+    };
     return data;
   };
 })();

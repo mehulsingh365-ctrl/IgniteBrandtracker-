@@ -57,13 +57,13 @@
       summary: p.summary, link: p.link
     }));
     return JSON.stringify({
-      note: meta.isSample
-        ? `Only ${meta.liveCount} of ${meta.totalTabs} data tabs are real. competitor_posts is REAL public data; other tabs may be SAMPLE (illustrative) data.`
-        : "All data tabs are real.",
+      note: `All data is real and public, collected up to ${meta.lastUpdated}. Sections with no data are simply not tracked yet.`,
       competitor_posts: posts,
-      kpis: D.kpis, keywords: D.keywords, hashtags: D.hashtags,
-      listening: pick(D.listening, ["date", "platform", "market", "product", "topic", "sentiment", "summary"]),
-      products: D.products, calendar: D.calendar, analyst_insights: pick(D.insights, ["title", "detail"])
+      accounts_followers: D.accounts,
+      analyst_insights: pick(D.insights, ["date", "title", "detail"]),
+      calendar: D.calendar,
+      keywords: D.keywords, hashtags: D.hashtags,
+      listening: pick(D.listening, ["date", "platform", "product", "topic", "sentiment", "summary"])
     });
   }
 
@@ -73,7 +73,7 @@ Rules:
 - Write for busy marketers: plain words, short sentences, confident and warm. Start with a one-sentence answer, then 2–5 short bullets. Keep it under 180 words unless asked for more.
 - Sound human. No buzzwords or filler ("unlock", "leverage", "elevate", "delve", "game-changer", "in today's landscape"), no emojis, no em dashes, and never describe yourself as an AI.
 - When you mention a post, name the brand and topic and add its link as [View post](url) if a link exists.
-- If you use a data tab marked as sample, say "(sample data)" next to that point.
+- Engagement on Instagram is likes per follower; on TikTok and YouTube it is per view. Never rank them against each other.
 - End with one short line starting "Next question to ask:" suggesting a useful follow-up.`;
 
   /* ---------- panel ---------- */

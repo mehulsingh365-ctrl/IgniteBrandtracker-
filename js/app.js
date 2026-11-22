@@ -77,44 +77,29 @@
 
   /* ---------- render: chrome ---------- */
   function renderChrome() {
-    const weeks = PulseInsights.weeks(DATA.kpis);
-    const week = weeks[weeks.length - 1] || "";
-    const dates = DATA.competitor_posts.map(p => p.date).concat(DATA.listening.map(m => m.date)).filter(Boolean).sort();
-    const last = dates[dates.length - 1];
-    const updated = last ? dateFmt(last, { day: "numeric", month: "long", year: "numeric" }) : "";
     const meta = DATA._meta;
-
-    const bar = $("announce");
-    bar.classList.toggle("is-sample", meta.isSample);
-    $("announceText").textContent = meta.isAllSample
-      ? `Preview with sample data · Week ${week.replace(/^W/, "")}`
-      : meta.isSample ? `Some figures are still sample data · ${meta.liveCount} of ${meta.totalTabs} sources live · Updated ${updated}`
-      : `Week ${week.replace(/^W/, "")} edition · Updated ${updated} · France & Europe`;
-
-    $("heroLabel").textContent = `Week ${week.replace(/^W/, "")} · Updated ${updated}`;
-    $("footerUpdated").textContent = `Last updated ${updated}.`;
-    $("healthPeriod").textContent = `${week} vs ${weeks[weeks.length - 2] || "—"}`;
-
+    const updated = meta.lastUpdated ? longDate(meta.lastUpdated) : "";
+    const n = DATA.competitor_posts.length;
+    $("announceText").textContent = n
+      ? `Updated ${updated} · ${n} real posts from ${meta.brands.length} brands · ${meta.platforms.join(", ")}`
+      : "No data yet";
+    $("heroLabel").textContent = updated ? `Updated ${updated}` : "";
+    $("footerUpdated").textContent = updated ? `Last updated ${updated}.` : "";
     const lead = DATA.insights.find(i => /high/i.test(i.priority)) || DATA.insights[0];
     if (lead) { $("heroTitle").textContent = lead.title; $("heroText").textContent = lead.detail; }
+    else { $("heroTitle").textContent = "This week's brief is on its way"; $("heroText").textContent = ""; }
   }
 
   function renderFilters() {
-    const ms = $("marketSelect");
-    ms.innerHTML = CFG.markets.map(m => `<option value="${esc(m)}">${m === "All" ? "All markets" : esc(m)}</option>`).join("");
-    ms.value = state.market;
-    $("footerMarkets").innerHTML = CFG.markets.map(m => `<button data-market="${esc(m)}" aria-pressed="${m === state.market}">${m === "All" ? "All markets" : esc(m)}</button>`).join("");
-
-    // Mobile filters (inside mobile menu)
+    // Mobile filter (inside mobile menu)
     const mm = $("mobileMenu");
-    if (!$("mMarket")) {
+    if (!$("mCategory")) {
       const wrap = document.createElement("div");
       wrap.style.cssText = "display:flex;gap:16px;padding:14px var(--pad);border-top:1px solid var(--line)";
-      wrap.innerHTML = `<label class="select"><select id="mMarket" aria-label="Market">${ms.innerHTML}</select></label>
-        <label class="select"><select id="mCategory" aria-label="Category">${$("categorySelect").innerHTML}</select></label>`;
+      wrap.innerHTML = `<label class="select"><select id="mCategory" aria-label="Category">${$("categorySelect").innerHTML}</select></label>`;
       mm.prepend(wrap);
     }
-    $("mMarket").value = state.market; $("mCategory").value = state.category;
+    $("mCategory").value = state.category;
 
     // Period bar
     $("periodPresets").innerHTML = PERIODS.map(([k, l]) => `<button type="button" data-period="${k}" aria-pressed="${state.period === k}">${l}</button>`).join("")
@@ -124,7 +109,7 @@
     $("dateTo").value = R ? R.to : (ds[ds.length - 1] || "");
     const v = view();
     const label = R ? `${R.from ? longDate(R.from) : "Start"} – ${R.to ? longDate(R.to) : "today"}` : "All time";
-    $("periodSummary").innerHTML = `Showing <strong>${label}</strong> · ${v.posts.length} post${v.posts.length === 1 ? "" : "s"} · ${v.listening.length} mention${v.listening.length === 1 ? "" : "s"}`
+    $("periodSummary").innerHTML = `Showing <strong>${label}</strong> · ${v.posts.length} post${v.posts.length === 1 ? "" : "s"} ${DATA.listening.length ? ` · ${v.listening.length} mention${v.listening.length === 1 ? "" : "s"}` : ""}`
       + (ds.length ? ` <span class="muted">· Latest data: ${longDate(ds[ds.length - 1])}</span>` : "");
   }
 
@@ -214,7 +199,7 @@
         </div>
         <div class="card__info">
           <div class="card__brand"><i class="dot" style="background:${color(p.brand)}"></i>${esc(p.brand)}${p.brand === FOCUS ? ' <span class="chip">Focus</span>' : ""}</div>
-          <div class="card__metric">${p.likes !== "" && p.likes != null ? `${fmt(p.likes)} <small>likes</small>` : `<small>Likes not public</small>`}${p.engagement_rate != null ? ` <small class="card__er">· ${pct(p.engagement_rate, 2)} eng. ${p.er_basis === "views" ? "per view" : "per follower"}</small>` : ""}</div>
+          <div class="card__metric">${p.likes !== "" && p.likes != null ? `${fmt(p.likes)} <small>likes</small>` : `<small>Likes not recorded</small>`}${p.engagement_rate != null ? ` <small class="card__er">· ${pct(p.engagement_rate, 2)} eng. ${p.er_basis === "views" ? "per view" : "per follower"}</small>` : ""}</div>
           <div class="card__note">${esc(p.platform)} · ${dateFmt(p.date)}${p.time ? ` · ${esc(p.time)}` : ""}${p.views ? ` · ${fmt(p.views)} views` : ""}</div>
           <div class="card__tags"><span class="tag-soft">${creatorType(p)}</span><span class="tag-soft">${esc(p.format)}</span></div>
           <button class="card__btn" data-quick="${DATA.competitor_posts.indexOf(p)}">Quick view</button>
@@ -285,35 +270,88 @@
   /* ---------- render: brief ---------- */
   function renderBrief(insight) {
     $("insightList").innerHTML = DATA.insights.slice(0, 3).map(i => `
-      <li><div><h3>${esc(i.title)}</h3><p>${esc(i.detail)}</p><p class="brief__meta">${esc(i.section)} · ${esc(i.priority)} priority</p></div></li>`).join("");
+      <li><div><h3>${esc(i.title)}</h3><p>${esc(i.detail)}</p><p class="brief__meta">${esc(i.section)}${i.date ? ` · ${dateFmt(i.date)}` : ""}</p></div></li>`).join("");
     $("flagList").innerHTML = insight.flags.map(f => `
       <div class="flag flag--${f.level}"><p class="eyebrow">${esc(f.label)}</p><p>${esc(f.text)}</p></div>`).join("");
   }
 
   /* ---------- render: health ---------- */
   function renderHealth(insight) {
-    const { cur, prev, week } = PulseInsights.kpiPair(DATA, FOCUS);
-    if (!cur) { $("kpiRow").innerHTML = `<div class="empty">No numbers yet for this week.</div>`; return; }
-    const hist = PulseInsights.weeks(DATA.kpis).map(w => DATA.kpis.find(k => k.brand === FOCUS && k.week === w)).filter(Boolean);
-    const c = color(FOCUS);
+    const v = view();
+    const posts = v.posts;
+    const R = range();
+    $("healthPeriod").textContent = R ? `${R.from ? longDate(R.from) : ""} – ${R.to ? longDate(R.to) : ""}` : "All time";
+
+    // Latest follower count per brand and platform
+    const latest = {};
+    DATA.accounts.forEach(a => { const k = `${a.brand}|${a.platform}`; if (!latest[k] || a.date > latest[k].date) latest[k] = a; });
+    const prevOf = a => DATA.accounts.filter(x => x.brand === a.brand && x.platform === a.platform && x.date < a.date).sort((x, y) => y.date.localeCompare(x.date))[0];
+    const fol = (b, plat) => latest[`${b}|${plat}`];
+    const brands = [...new Set([...DATA.accounts.map(a => a.brand), ...posts.map(p => p.brand)])];
+
+    const likes = {}, count = {};
+    posts.forEach(p => { count[p.brand] = (count[p.brand] || 0) + 1; if (p.likes !== "" && p.likes != null) likes[p.brand] = (likes[p.brand] || 0) + Number(p.likes); });
+    const totalLikes = Object.values(likes).reduce((a, b) => a + b, 0);
+    const share = b => totalLikes ? ((likes[b] || 0) / totalLikes) * 100 : 0;
+    const withLikes = b => posts.filter(p => p.brand === b && p.likes !== "" && p.likes != null).length;
+    const avgLikes = b => withLikes(b) ? (likes[b] || 0) / withLikes(b) : 0;
+
+    if (!posts.length && !DATA.accounts.length) {
+      $("kpiRow").innerHTML = `<div class="empty">No posts in this period. Try a longer period.</div>`;
+      ["sovChart", "erChart", "audienceTable", "sovSowhat", "erSowhat"].forEach(id => $(id).innerHTML = "");
+      return;
+    }
+
+    // KPI tiles (Vichy)
+    const ig = fol(FOCUS, "Instagram"), tt = fol(FOCUS, "TikTok");
+    const totalFol = (ig ? ig.followers : 0) + (tt ? tt.followers : 0);
+    const igPrev = ig && prevOf(ig);
+    const ranked = brands.map(b => ({ b, s: share(b) })).sort((a, b) => b.s - a.s);
+    const rank = ranked.findIndex(x => x.b === FOCUS) + 1;
+    const compBrands = brands.filter(b => b !== FOCUS && withLikes(b));
+    const compAvg = compBrands.length ? compBrands.reduce((a, b) => a + avgLikes(b), 0) / compBrands.length : 0;
+    const mostActive = brands.filter(b => b !== FOCUS).sort((a, b) => (count[b] || 0) - (count[a] || 0))[0];
     const tiles = [
-      { label: "Followers", tip: "Followers across every platform we follow.", val: fmt(cur.followers), d: delta(cur.followers, prev?.followers), s: hist.map(h => h.followers) },
-      { label: "Engagement rate", tip: "(Likes + comments) ÷ followers × 100, average across the week's posts.", val: pct(cur.avg_engagement_rate), d: delta(cur.avg_engagement_rate, prev?.avg_engagement_rate, "pts"), s: hist.map(h => h.avg_engagement_rate) },
-      { label: "Mentions", tip: "Public posts and comments that mention the brand this week.", val: fmt(cur.mentions), d: delta(cur.mentions, prev?.mentions), s: hist.map(h => h.mentions) },
-      { label: "Positive sentiment", tip: `How many mentions are positive. Negative: ${cur.negative_pct}%.`, val: pct(cur.positive_pct, 0), d: delta(cur.positive_pct, prev?.positive_pct, "pts"), s: hist.map(h => h.positive_pct) }
+      { label: "Followers", tip: "Vichy's followers on Instagram and TikTok combined, from the public profiles.", val: fmt(totalFol),
+        sub: `Instagram ${ig ? fmt(ig.followers) : "—"} · TikTok ${tt ? fmt(tt.followers) : "—"}${igPrev ? ` · ${delta(ig.followers, igPrev.followers)}` : ""}` },
+      { label: "Posts published", tip: "Vichy posts in the selected period, across the platforms we track.", val: String(count[FOCUS] || 0),
+        sub: mostActive ? `Most active competitor: ${esc(mostActive)} (${count[mostActive] || 0})` : "" },
+      { label: "Average likes per post", tip: "Total likes divided by number of posts in the selected period.", val: fmt(avgLikes(FOCUS)),
+        sub: `Competitor average: ${fmt(compAvg)}` },
+      { label: "Share of engagement", tip: "Vichy's share of all likes on the tracked brands' posts in the selected period.", val: pct(share(FOCUS)),
+        sub: rank ? `Rank #${rank} of ${ranked.length}` : "" }
     ];
     $("kpiRow").innerHTML = tiles.map(t => `
       <div class="kpi"><div class="kpi__label">${t.label} <button class="info" data-tip="${esc(t.tip)}">i</button></div>
-      <div class="kpi__value">${t.val}</div>${t.d}${spark(t.s, c)}</div>`).join("");
+      <div class="kpi__value">${t.val}</div><div class="kpi__sub">${t.sub}</div></div>`).join("");
 
-    const curWeek = DATA.kpis.filter(k => k.week === week);
-    const total = curWeek.reduce((s, k) => s + k.mentions, 0);
-    const sov = curWeek.map(k => ({ brand: k.brand, v: (k.mentions / total) * 100 })).sort((a, b) => b.v - a.v);
-    $("sovChart").innerHTML = bars(sov, v => pct(v));
-    const er = curWeek.map(k => ({ brand: k.brand, v: k.avg_engagement_rate })).sort((a, b) => b.v - a.v);
-    $("erChart").innerHTML = bars(er, v => pct(v));
-    $("sovSowhat").innerHTML = insight.sowhat.sov || "";
-    $("erSowhat").innerHTML = insight.sowhat.er || "";
+    // Share of engagement bars
+    const sov = ranked.filter(x => (likes[x.b] || 0) > 0).map(x => ({ brand: x.b, v: x.s }));
+    $("sovChart").innerHTML = sov.length ? bars(sov, x => pct(x)) : `<div class="empty">No likes recorded in this period.</div>`;
+    const leader = sov[0];
+    $("sovSowhat").innerHTML = leader ? `${leader.brand === FOCUS ? "Vichy leads" : `<strong>${esc(leader.brand)}</strong> leads`} with ${pct(leader.v)} of all likes. Vichy has <strong>${pct(share(FOCUS))}</strong> from ${count[FOCUS] || 0} posts (rank #${rank}).` : "";
+
+    // Instagram engagement rate (likes / followers)
+    const igEr = brands.map(b => {
+      const ps = posts.filter(p => p.brand === b && p.platform === "Instagram" && p.engagement_rate != null);
+      return ps.length ? { brand: b, v: ps.reduce((a, p) => a + p.engagement_rate, 0) / ps.length, n: ps.length } : null;
+    }).filter(Boolean).sort((a, b) => b.v - a.v);
+    $("erChart").innerHTML = igEr.length ? bars(igEr, x => pct(x, 2)) : `<div class="empty">No Instagram posts in this period.</div>`;
+    const vEr = igEr.find(x => x.brand === FOCUS);
+    const others = igEr.filter(x => x.brand !== FOCUS);
+    const median = others.length ? [...others].sort((a, b) => a.v - b.v)[Math.floor(others.length / 2)].v : null;
+    $("erSowhat").innerHTML = igEr.length ? `<strong>${esc(igEr[0].brand)}</strong> gets the strongest reaction per follower (${pct(igEr[0].v, 2)}).${vEr && median != null ? ` Vichy is at ${pct(vEr.v, 2)}, ${vEr.v >= median ? "above" : "below"} the typical competitor (${pct(median, 2)}).` : ""}` : "";
+
+    // Audience table
+    const plats = [...new Set(DATA.accounts.map(a => a.platform))];
+    const totalF = b => plats.reduce((s2, pl) => s2 + (fol(b, pl)?.followers || 0), 0);
+    const rows = brands.filter(b => plats.some(pl => fol(b, pl))).sort((a, b) => (b === FOCUS) - (a === FOCUS) || totalF(b) - totalF(a));
+    $("audienceTable").innerHTML = rows.length ? `<table class="atable"><thead><tr><th>Brand</th>${plats.map(pl => `<th>${esc(pl)}</th>`).join("")}<th>Posts in period</th></tr></thead><tbody>${
+      rows.map(b => `<tr class="${b === FOCUS ? "is-focus" : ""}"><td><i class="dot" style="background:${color(b)}"></i>${esc(b)}</td>${plats.map(pl => { const a = fol(b, pl); return `<td>${a ? `<a href="${esc(a.url)}" target="_blank" rel="noopener">${fmt(a.followers)}</a><small>${esc(a.handle)}</small>` : "—"}</td>`; }).join("")}<td>${count[b] || 0}</td></tr>`).join("")
+    }</tbody></table>` : `<div class="empty">No follower data yet.</div>`;
+
+    const checked = plats.map(pl => { const ds = DATA.accounts.filter(a => a.platform === pl).map(a => a.date).sort(); return `${pl} ${dateFmt(ds[ds.length - 1])}`; }).join(", ");
+    $("healthSource").textContent = `Source: public posts and profiles on ${DATA._meta.platforms.join(", ")}. Likes are counted as shown on each post. Followers checked: ${checked}.`;
   }
 
   function bars(rows, label) {
@@ -328,6 +366,9 @@
 
   /* ---------- render: trends ---------- */
   function renderTrends(v, insight) {
+    const none = !DATA.keywords.length && !DATA.hashtags.length;
+    $("trendsNotice").hidden = !none; $("trendsBody").hidden = none;
+    if (none) return;
     const kws = [...v.keywords].sort((a, b) => b.change_vs_prev - a.change_vs_prev).slice(0, 8);
     $("keywordList").innerHTML = kws.length ? kws.map((k, i) => `
       <div class="rank"><span class="rank__n">${i + 1}</span>
@@ -346,6 +387,9 @@
   /* ---------- render: listening ---------- */
   function renderListening(v, insight) {
     const ms = v.listening;
+    const none = !DATA.listening.length;
+    $("listeningNotice").hidden = !none; $("listeningBody").hidden = none; $("sentimentTabs").hidden = none;
+    if (none) return;
     $("sentimentTabs").innerHTML = ["All", "Positive", "Neutral", "Negative"].map(s => `<button role="tab" data-sentiment="${s}" aria-selected="${s === state.sentiment}">${s}</button>`).join("");
 
     const plats = [...new Set(ms.map(m => m.platform))];
@@ -524,17 +568,19 @@
     renderTrends(v, insight); renderListening(v, insight);
     renderWorking(v); renderCalendar();
     const ps = $("postsSowhat"); ps.innerHTML = insight.sowhat.posts || "";
+    const pd = DATA.competitor_posts.map(p => p.date).filter(Boolean).sort();
+    $("postsSource").textContent = pd.length ? `Source: public brand posts on ${DATA._meta.platforms.join(", ")}, ${longDate(pd[0])} – ${longDate(pd[pd.length - 1])}. Likes, comments and views as shown on each post when collected. Times in Paris time.` : "";
+    const idates = DATA.insights.map(i => i.date).filter(Boolean).sort();
+    $("briefSource").textContent = idates.length ? `Written ${longDate(idates[idates.length - 1])} from the posts above. Alerts update automatically with the data.` : "";
   }
 
   /* ---------- events ---------- */
   function bind() {
     const setMarket = m => { state.market = m; render(); };
     const setCategory = c => { state.category = c; render(); };
-    $("marketSelect").addEventListener("change", e => setMarket(e.target.value));
     $("categorySelect").addEventListener("change", e => setCategory(e.target.value));
 
     document.addEventListener("change", e => {
-      if (e.target.id === "mMarket") setMarket(e.target.value);
       if (e.target.id === "mCategory") { $("categorySelect").value = e.target.value; setCategory(e.target.value); }
     });
 
@@ -548,7 +594,6 @@
       if (t.dataset.view) { state.view = t.dataset.view; try { localStorage.setItem("bp_view", state.view); } catch (err) {} renderPosts(view()); }
       else if (t.dataset.platform) { state.platform = t.dataset.platform; renderPosts(view()); renderWorking(view()); }
       else if (t.dataset.sentiment) { state.sentiment = t.dataset.sentiment; renderListening(view(), PulseInsights.generate(DATA, view())); }
-      else if (t.dataset.market) { $("marketSelect").value = t.dataset.market; setMarket(t.dataset.market); }
       else if (t.dataset.quick != null) { e.stopPropagation(); openDrawer(+t.dataset.quick); }
       else if (t.dataset.post != null) openDrawer(+t.dataset.post);
       else if (t.dataset.searchbtn) { e.preventDefault(); openSearch(t.dataset.searchbtn); }

@@ -1,30 +1,12 @@
 /* =====================================================================
    IGNITE — CONFIG
-   ---------------------------------------------------------------------
-   HOW TO CONNECT YOUR GOOGLE SHEET
-   1. In Google Sheets: File → Share → Publish to web.
-   2. For EACH tab, choose the tab name + "Comma-separated values (.csv)",
-      click Publish, and copy the link.
-   3. Paste each link below between the quotes.
-   Any tab left empty ("") uses the built-in sample data instead.
-   When ALL tabs are connected, the "Sample data" banner disappears.
+   All data lives in the data/ folder as CSV files (free, no services needed):
+   competitor_posts.csv, accounts.csv, insights.csv, calendar.csv
+   (+ keywords.csv, hashtags.csv, listening.csv once those are tracked).
    ===================================================================== */
 
 window.PULSE_CONFIG = {
   focusBrand: "Vichy",
-
-  sheets: {
-    insights: "",
-    kpis: "",
-    competitor_posts: "",
-    keywords: "",
-    hashtags: "",
-    listening: "",
-    products: "",
-    calendar: ""
-  },
-
-  markets: ["All", "France", "UK", "Germany", "Spain", "Italy", "Europe"],
 
   /* One colour per brand — used everywhere (tiles, dots, bars). */
   brandColors: {

@@ -84,6 +84,22 @@ window.PulseInsights = (function () {
       }
     }
 
+    // 3b. Share of posts vs share of likes (focus brand)
+    if (posts.length) {
+      const total = view.posts.length;
+      const likesOf = b => view.posts.filter(p => !b || p.brand === b).reduce((a, p) => a + (Number(p.likes) || 0), 0);
+      const allLikes = likesOf();
+      const mine = view.posts.filter(p => p.brand === focus).length;
+      if (total && allLikes && mine) {
+        const postShare = (mine / total) * 100, likeShare = (likesOf(focus) / allLikes) * 100;
+        flags.push({ level: likeShare < postShare ? "alert" : "opportunity", label: "Watch · Share of engagement",
+          text: `${focus} published ${postShare.toFixed(0)}% of all tracked posts in this period and earned ${likeShare.toFixed(0)}% of the likes.` });
+      }
+      const top = [...view.posts].sort((a, b) => (Number(b.likes) || 0) - (Number(a.likes) || 0))[0];
+      if (top && Number(top.likes)) flags.unshift({ level: "info", label: "Most liked · " + top.platform,
+        text: `${top.brand}: "${top.topic}" with ${Number(top.likes).toLocaleString("en-GB")} likes.` });
+    }
+
     // 4. Fastest-rising keyword & opportunities
     const kws = view.keywords;
     if (kws.length) {

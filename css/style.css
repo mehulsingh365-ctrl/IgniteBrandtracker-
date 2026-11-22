@@ -658,3 +658,27 @@ body:not(.has-ask) .ask-pill { background: var(--soft); color: var(--ink); }
   .filterbar__label { display: none; }
 }
 @media (max-width: 900px) { .filterbar { position: static; } html { scroll-padding-top: calc(var(--hh) + 12px); } }
+
+/* =====================================================================
+   REAL-DATA COMPONENTS: sources, notices, KPI sub-lines, audience table
+   ===================================================================== */
+.source { margin: 24px 0 0; font-size: 12.5px; color: var(--muted); max-width: 900px; order: 3; }
+.source:empty { display: none; }
+.notice { background: #fff; border: 1px dashed var(--line); border-radius: var(--r); padding: 20px 22px; max-width: 760px; }
+.section--soft .notice { background: rgba(255,255,255,.7); }
+.notice p { margin: 0; color: var(--ink-2); font-size: 14.5px; }
+.notice strong { color: var(--ink); font-weight: 500; }
+.kpi__sub { font-size: 12.5px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+.kpi__sub .delta { font-size: 12px; }
+.atable { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff; border-radius: var(--r); overflow: hidden; }
+.atable th { text-align: left; font-size: 10.5px; letter-spacing: var(--track); text-transform: uppercase; color: var(--muted); font-weight: 500; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.atable td { padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.atable tr:last-child td { border-bottom: 0; }
+.atable td:first-child { font-weight: 500; white-space: nowrap; }
+.atable td:first-child .dot { margin-right: 8px; vertical-align: middle; }
+.atable td small { display: block; font-size: 11.5px; color: var(--muted); }
+.atable a { color: var(--ink); }
+.atable a:hover { color: var(--accent); }
+.atable tr.is-focus td { background: var(--accent-soft); }
+@media (max-width: 700px) { .atable { font-size: 12.5px; } .atable th, .atable td { padding: 10px 8px; } }
+#audienceTable { overflow-x: auto; } .atable { min-width: 520px; }

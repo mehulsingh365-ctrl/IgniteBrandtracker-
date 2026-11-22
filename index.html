@@ -58,10 +58,6 @@
       </div>
       <div class="filterbar__right">
         <label class="select">
-          <span class="visually-hidden">Market</span>
-          <select id="marketSelect" aria-label="Market"></select>
-        </label>
-        <label class="select">
           <span class="visually-hidden">Category</span>
           <select id="categorySelect" aria-label="Category">
             <option value="All">All categories</option>
@@ -105,11 +101,12 @@
         <div class="brief__intro">
           <p class="eyebrow">The brief</p>
           <h2 class="serif-title">Three things to know this week</h2>
-          <p class="muted">Written every week, plus alerts when the numbers move.</p>
+          <p class="muted">Written from the real posts we track, plus alerts worked out from the numbers.</p>
         </div>
         <ol class="brief__list" id="insightList"></ol>
       </div>
       <div class="flags" id="flagList"></div>
+      <p class="source" id="briefSource"></p>
     </section>
 
 
@@ -137,6 +134,7 @@
       <p class="creative-note" id="creativeNote" hidden></p>
       <div class="grid grid--posts" id="postGrid"></div>
       <div class="grid-more"><button class="btn btn--ghost" id="showAllBtn" type="button" hidden></button></div>
+      <p class="source" id="postsSource"></p>
       <p class="sowhat" id="postsSowhat"></p>
     </section>
 
@@ -173,7 +171,7 @@
     <section class="section section--soft" id="health">
       <div class="section__head">
         <div>
-          <p class="eyebrow">Vichy · All markets</p>
+          <p class="eyebrow">Vichy vs. competitors</p>
           <h2 class="section__title">Brand health</h2>
         </div>
         <span class="muted small" id="healthPeriod"></span>
@@ -181,16 +179,21 @@
       <div class="kpis" id="kpiRow"></div>
       <div class="two-col">
         <div>
-          <h3 class="block-title">Share of voice <button class="info" data-tip="Each brand's share of all mentions this week. The higher it is, the more people are talking about them.">i</button></h3>
+          <h3 class="block-title">Share of engagement <button class="info" data-tip="Each brand's share of all likes on the tracked brands' posts in the selected period (Instagram, TikTok and YouTube). It shows who is winning attention with their own content.">i</button></h3>
           <div id="sovChart" class="bars"></div>
           <p class="sowhat" id="sovSowhat"></p>
         </div>
         <div>
-          <h3 class="block-title">Engagement rate vs competitors <button class="info" data-tip="Videos: likes and comments divided by views. Photos: divided by followers. Averaged across the week.">i</button></h3>
+          <h3 class="block-title">Instagram engagement rate <button class="info" data-tip="Average likes per Instagram post divided by the account's followers. It shows how much of each audience actually reacts, so big and small accounts can be compared fairly.">i</button></h3>
           <div id="erChart" class="bars"></div>
           <p class="sowhat" id="erSowhat"></p>
         </div>
       </div>
+      <div class="mt">
+        <h3 class="block-title">Audience by platform <button class="info" data-tip="Followers on each brand's main account, as shown on the public profile on the date checked.">i</button></h3>
+        <div id="audienceTable"></div>
+      </div>
+      <p class="source" id="healthSource"></p>
     </section>
 
 
@@ -203,7 +206,10 @@
         </div>
         <div class="tabs" id="sentimentTabs" role="tablist"></div>
       </div>
-      <div class="listening">
+      <div class="notice" id="listeningNotice" hidden>
+        <p><strong>Not tracked yet.</strong> Listening will cover comments on the brands' own posts, Reddit threads and YouTube comments, all public and free. It starts with the daily updates.</p>
+      </div>
+      <div class="listening" id="listeningBody">
         <div class="listening__side">
           <h3 class="block-title">Sentiment by platform</h3>
           <div id="sentimentChart"></div>
@@ -224,7 +230,10 @@
           <h2 class="section__title">Trends</h2>
         </div>
       </div>
-      <div class="two-col">
+      <div class="notice" id="trendsNotice" hidden>
+        <p><strong>Not tracked yet.</strong> Trends will come from Google Trends and TikTok Creative Center, both free and public. They start with the daily updates.</p>
+      </div>
+      <div class="two-col" id="trendsBody">
         <div>
           <h3 class="block-title">Rising search keywords <button class="info" data-tip="Google Trends interest (0 to 100) and how much it moved since the last period. These scores compare interest. They aren't search volumes.">i</button></h3>
           <div id="keywordList" class="rank-list"></div>
@@ -276,15 +285,11 @@
         <p class="footer__head">Sections</p>
         <a href="#brief">The brief</a><a href="#posts">Competitor posts</a><a href="#listening">Listening</a><a href="#calendar">Calendar</a>
       </div>
-      <div>
-        <p class="footer__head">Market</p>
-        <div class="footer__markets" id="footerMarkets"></div>
-      </div>
     </div>
     <details class="footer__how" id="method">
       <summary>How Ignite works</summary>
-      <p>Ignite follows what Vichy's competitors post and what people say about Vichy, using public sources only: Google Trends, TikTok Creative Center, public Instagram, TikTok, YouTube and LinkedIn posts, Reddit and product reviews. Comments are summarised in our own words, and no personal data is kept.</p>
-      <p>Good to know: Google Trends scores compare interest and aren't search volumes. Reach and impressions aren't public, so engagement is based on likes, comments and views. For videos it's likes and comments divided by views; for photos, divided by followers. Sentiment is read from a sample of mentions, not every comment. Times are shown in Paris time.</p>
+      <p>Ignite tracks what Vichy and six competitors (La Roche-Posay, Avène, Bioderma, CeraVe, Eucerin, Klorane) publish on their public Instagram, TikTok and YouTube accounts. Every number comes from those public pages: likes, comments and views as shown on each post, and followers as shown on each profile. Nothing is estimated or made up. Sections that aren't tracked yet say so.</p>
+      <p>How to read it: Instagram engagement is likes divided by followers; TikTok and YouTube engagement is likes and comments divided by views. The two aren't compared directly. Share of engagement is each brand's share of all likes on the tracked posts. Times are Paris time. The tool is free and built only on public data.</p>
     </details>
     <p class="footer__legal">Ignite is an independent project. It isn't affiliated with or endorsed by Vichy Laboratoires, L'Oréal or any brand shown. Brand names belong to their owners. All data comes from public sources.</p>
     <p class="footer__legal" id="footerUpdated"></p>
@@ -336,7 +341,6 @@
   <div class="tooltip" id="tooltip" role="tooltip" hidden></div>
 
   <script src="js/config.js"></script>
-  <script src="js/sample-data.js"></script>
   <script src="js/data.js"></script>
   <script src="js/insights.js"></script>
   <script src="js/app.js"></script>

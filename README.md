@@ -5,9 +5,8 @@ Independent, static website (HTML/CSS/JS, no build step, no API keys).
 ## Files
 - `index.html` — page structure
 - `css/style.css` — design
-- `js/config.js` — **the only file you normally edit**: Google Sheet links, brand colours, brand notes
-- `js/sample-data.js` — sample data (illustrative only) + the exact column headers for each sheet tab
-- `js/data.js` — loads your sheet (falls back to sample data)
+- `js/config.js` — brand colours and notes
+- `js/data.js` — loads the CSV files in data/
 - `js/insights.js` — rule-based insight engine (thresholds at the top)
 - `js/app.js` — rendering and interactions
 
@@ -15,19 +14,21 @@ Independent, static website (HTML/CSS/JS, no build step, no API keys).
 - `data/competitor_posts.csv` has a `time` column (HH:MM, Paris time). It powers the posting timeline and the "When competitors post" grid.
 - The period bar (Last 7 / 30 / 90 days, All time, or custom dates) filters posts, the timeline, "What's working" and listening.
 
-## Connect your Google Sheet
-1. Create a Google Sheet with 8 tabs named: insights, kpis, competitor_posts, keywords, hashtags, listening, products, calendar.
-2. Copy the header row of each tab from `js/sample-data.js`.
-3. File → Share → Publish to web → pick each tab → CSV → Publish → copy link.
-4. Paste each link into `js/config.js`. The "Sample data" banner disappears when all 8 are live.
+## Data files (data/)
+- `competitor_posts.csv` — every tracked post (date, time, brand, platform, likes, comments, views, followers, link)
+- `accounts.csv` — followers per brand and platform, one row per check (adding new dated rows builds history)
+- `insights.csv` — the 3 written takeaways shown in the brief
+- `calendar.csv` — upcoming moments
+- `keywords.csv`, `hashtags.csv`, `listening.csv` — added when trends and listening tracking start
+There is no sample data: if a file is missing, that section shows "Not tracked yet".
 
 ## Preview locally
 Run `python3 -m http.server` in this folder and open http://localhost:8000
-(Opening index.html directly also works with sample data.)
+(Opening index.html directly won't load the data files; use the local server.)
 
 ## Deploy on Vercel
 Push this folder to a GitHub repo → Vercel → Add New Project → import the repo →
-Framework preset: "Other" → Deploy. Every edit to the Google Sheet shows on the site on refresh.
+Framework preset: "Other" → Deploy. Every push to GitHub updates the live site within about a minute.
 
 ## Showing the real creatives
 Paste each post's public URL into the `link` column of `competitor_posts`. Supported:
