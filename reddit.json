@@ -1,0 +1,9 @@
+{
+ "source": "Reddit",
+ "engine": "browser",
+ "schedule": "Twice a day",
+ "last_run": "",
+ "ok": null,
+ "items": 0,
+ "message": "Starts with the browser runs"
+}

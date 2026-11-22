@@ -1,0 +1,9 @@
+{
+ "source": "LinkedIn",
+ "engine": "browser",
+ "schedule": "Twice a day",
+ "last_run": "",
+ "ok": null,
+ "items": 0,
+ "message": "Needs a LinkedIn login in the Claude browser"
+}

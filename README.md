@@ -14,13 +14,19 @@ Independent, static website (HTML/CSS/JS, no build step, no API keys).
 - `data/competitor_posts.csv` has a `time` column (HH:MM, Paris time). It powers the posting timeline and the "When competitors post" grid.
 - The period bar (Last 7 / 30 / 90 days, All time, or custom dates) filters posts, the timeline, "What's working" and listening.
 
-## Data files (data/)
-- `competitor_posts.csv` — every tracked post (date, time, brand, platform, likes, comments, views, followers, link)
-- `accounts.csv` — followers per brand and platform, one row per check (adding new dated rows builds history)
-- `insights.csv` — the 3 written takeaways shown in the brief
-- `calendar.csv` — upcoming moments
-- `keywords.csv`, `hashtags.csv`, `listening.csv` — added when trends and listening tracking start
-There is no sample data: if a file is missing, that section shows "Not tracked yet".
+## Data files (data/) — each update engine writes only its own files
+| File | Written by | How often |
+|---|---|---|
+| `posts/youtube.csv`, `status/youtube.json` | GitHub Action (YouTube API) | every 2 hours |
+| `news.csv`, `status/news.json` | GitHub Action (Google News RSS) | every 2 hours |
+| `posts/instagram.csv`, `posts/tiktok.csv`, `accounts.csv`, `status/instagram.json`, `status/tiktok.json` | Claude scheduled browser run | twice a day |
+| `listening.csv`, `status/reddit.json` | Claude scheduled browser run (Reddit search) | twice a day |
+| `keywords.csv`, `hashtags.csv`, `status/trends.json` | Claude scheduled browser run | once a day |
+| `insights.csv` | Claude scheduled browser run | twice a day |
+| `calendar.csv` | by hand | monthly |
+
+There is no sample data: an empty file means "not tracked yet", and the site says so.
+Before pushing your own changes, always run `git pull` first (the bots update the repo on their own).
 
 ## Preview locally
 Run `python3 -m http.server` in this folder and open http://localhost:8000

@@ -1,0 +1,9 @@
+{
+ "source": "Instagram",
+ "engine": "browser",
+ "schedule": "Twice a day",
+ "last_run": "2026-11-21T23:20:00Z",
+ "ok": true,
+ "items": 74,
+ "message": "Collected manually; automatic runs start soon"
+}

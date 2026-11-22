@@ -29,6 +29,7 @@
         <a href="#posts">Posts</a>
         <a href="#working">What works</a>
         <a href="#listening">Listening</a>
+        <a href="#news">News</a>
         <a href="#trends">Trends</a>
         <a href="#ideas" class="claude-only">Ideas</a>
       </nav>
@@ -73,7 +74,7 @@
   <!-- Mobile menu -->
   <div class="mobile-menu" id="mobileMenu" hidden>
     <a href="#brief">The brief</a><a href="#posts">Competitor posts</a><a href="#working">What's working</a><a href="#health">Brand health</a>
-    <a href="#listening">Listening</a><a href="#trends">Trends</a><a href="#ideas" class="claude-only">Campaign ideas</a><a href="#calendar">Calendar</a>
+    <a href="#news">In the news</a><a href="#listening">Listening</a><a href="#trends">Trends</a><a href="#ideas" class="claude-only">Campaign ideas</a><a href="#calendar">Calendar</a><a href="#status">Data status</a>
   </div>
 
   <main>
@@ -116,6 +117,7 @@
         <div>
           <p class="eyebrow">Competitor watch</p>
           <h2 class="section__title">What competitors posted</h2>
+          <p class="fresh" id="postsFresh"></p>
         </div>
         <div class="posts-controls">
           <div class="tabs" id="platformTabs" role="tablist"></div>
@@ -173,6 +175,7 @@
         <div>
           <p class="eyebrow">Vichy vs. competitors</p>
           <h2 class="section__title">Brand health</h2>
+          <p class="fresh" id="healthFresh"></p>
         </div>
         <span class="muted small" id="healthPeriod"></span>
       </div>
@@ -194,6 +197,36 @@
         <div id="audienceTable"></div>
       </div>
       <p class="source" id="healthSource"></p>
+    </section>
+
+
+    <!-- In the news -->
+    <section class="section" id="news">
+      <div class="section__head">
+        <div>
+          <p class="eyebrow">Press coverage</p>
+          <h2 class="section__title">In the news</h2>
+          <p class="fresh" id="newsFresh"></p>
+        </div>
+      </div>
+      <p class="sowhat" id="newsSowhat"></p>
+      <div class="notice" id="newsNotice" hidden>
+        <p><strong>Not tracked yet.</strong> Press coverage comes from Google News in English and French, free and public. It updates every 2 hours once the news engine has run.</p>
+      </div>
+      <div class="news" id="newsBody">
+        <div>
+          <h3 class="block-title">Share of press coverage <button class="info" data-tip="Each brand's share of all news articles about the seven brands in the selected period, from Google News (English and French). A simple, free stand-in for share of voice in the press.">i</button></h3>
+          <div id="pressChart" class="bars"></div>
+        </div>
+        <div>
+          <div class="news__head">
+            <h3 class="block-title">Latest articles</h3>
+            <div class="chip-row chip-row--tight" id="newsChips"></div>
+          </div>
+          <div id="newsList" class="news__list"></div>
+        </div>
+      </div>
+      <p class="source" id="newsSource"></p>
     </section>
 
 
@@ -272,6 +305,17 @@
       <div class="timeline" id="timeline"></div>
     </section>
 
+    <!-- Data status -->
+    <section class="section section--soft" id="status">
+      <div class="section__head">
+        <div>
+          <p class="eyebrow">Behind the numbers</p>
+          <h2 class="section__title">Data status</h2>
+        </div>
+      </div>
+      <div id="statusTable"></div>
+      <p class="source">Cloud updates run on GitHub, even when no computer is on. Browser updates run in the Claude desktop app and need its Mac awake. This page checks for new data every 10 minutes.</p>
+    </section>
   </main>
 
   <!-- Footer -->
