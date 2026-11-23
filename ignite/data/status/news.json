@@ -1,9 +1,9 @@
 {
  "source": "News",
  "engine": "cloud",
- "schedule": "Every 2 hours",
- "last_run": "2026-11-23T20:38:39Z",
+ "schedule": "Every hour",
+ "last_run": "2026-11-23T23:47:13Z",
  "ok": true,
- "items": 108,
- "message": "0 new articles, 20 searches failed"
+ "items": 86,
+ "message": "4 new articles"
 }
