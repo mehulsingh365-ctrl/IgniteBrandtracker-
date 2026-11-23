@@ -2,7 +2,7 @@ name: Refresh news
 
 on:
   schedule:
-    - cron: "47 */2 * * *"   # every 2 hours (UTC)
+    - cron: "47 * * * *"   # every hour (UTC); GitHub may run it later than planned
   workflow_dispatch: {}
 
 permissions:
@@ -15,6 +15,7 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
