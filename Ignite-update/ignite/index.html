@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ignite</title>
+  <meta name="description" content="A weekly read on what Vichy's competitors are posting, what's working and what people are saying." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <a class="skip" href="#posts">Skip to content</a>
+
+  <!-- Announcement bar -->
+  <div class="announce" id="announce">
+    <span id="announceText">Weekly edition</span>
+  </div>
+
+  <!-- Header -->
+  <header class="header" id="top">
+    <div class="header__inner">
+      <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open menu">
+        <svg viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+      </button>
+      <nav class="nav nav--left" aria-label="Primary">
+        <a href="#brief">Brief</a>
+        <a href="#posts">Posts</a>
+        <a href="#working">What works</a>
+        <a href="#listening">Listening</a>
+        <a href="#news">News</a>
+        <a href="#trends">Trends</a>
+        <a href="#ideas" class="claude-only">Ideas</a>
+      </nav>
+      <a class="wordmark" href="#top" aria-label="Ignite home">
+        <span class="wordmark__main">IGNITE</span>
+      </a>
+      <div class="header__tools">
+        <button class="ask-pill" id="askOpenBtn" aria-label="Ask Ignite">Ask</button>
+        <button class="icon-btn" id="searchBtn" aria-label="Search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filter bar: period, market, category -->
+  <div class="filterbar" id="filterbar">
+    <div class="filterbar__inner">
+      <div class="period" role="group" aria-label="Period">
+        <span class="filterbar__label">Period</span>
+        <div class="seg" id="periodPresets"></div>
+        <div class="dates">
+          <label><span class="visually-hidden">From</span><input type="date" id="dateFrom" /></label>
+          <span class="dates__sep">to</span>
+          <label><span class="visually-hidden">To</span><input type="date" id="dateTo" /></label>
+        </div>
+      </div>
+      <div class="filterbar__right">
+        <label class="select">
+          <span class="visually-hidden">Category</span>
+          <select id="categorySelect" aria-label="Category">
+            <option value="All">All categories</option>
+            <option value="Skincare">Skincare</option>
+            <option value="Haircare">Haircare</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    <p class="filterbar__summary" id="periodSummary"></p>
+  </div>
+
+  <!-- Mobile menu -->
+  <div class="mobile-menu" id="mobileMenu" hidden>
+    <a href="#brief">The brief</a><a href="#posts">Competitor posts</a><a href="#working">What's working</a><a href="#health">Brand health</a>
+    <a href="#news">In the news</a><a href="#listening">Listening</a><a href="#trends">Trends</a><a href="#ideas" class="claude-only">Campaign ideas</a><a href="#calendar">Calendar</a><a href="#status">Data status</a>
+  </div>
+
+  <main>
+    <!-- Hero: insight of the week -->
+    <section class="hero" id="hero">
+      <div class="hero__bg" aria-hidden="true"></div>
+      <div class="hero__label" id="heroLabel">Week —</div>
+      <div class="hero__content">
+        <span class="tag tag--light">This week's headline</span>
+        <h1 class="hero__title" id="heroTitle">Loading this week's brief</h1>
+        <p class="hero__text" id="heroText"></p>
+        <form class="ask-hero" id="askForm" autocomplete="off">
+          <label class="visually-hidden" for="askInput">Ask a question about the competition</label>
+          <input id="askInput" type="text" placeholder="Ask a question, like: What worked best for competitors this week?" />
+          <button type="submit">Ask</button>
+        </form>
+        <div class="ask-chips" id="askChips"></div>
+      </div>
+    </section>
+
+
+    <!-- The brief -->
+    <section class="section section--soft" id="brief">
+      <div class="brief">
+        <div class="brief__intro">
+          <p class="eyebrow">The brief</p>
+          <h2 class="serif-title">Three things to know this week</h2>
+          <p class="muted">Written from the real posts we track, plus alerts worked out from the numbers.</p>
+        </div>
+        <ol class="brief__list" id="insightList"></ol>
+      </div>
+      <div class="flags" id="flagList"></div>
+      <p class="source" id="briefSource"></p>
+    </section>
+
+
+    <!-- Competitor posts of the week -->
+    <section class="section" id="posts">
+      <div class="section__head">
+        <div>
+          <p class="eyebrow">Competitor watch</p>
+          <h2 class="section__title">What competitors posted</h2>
+          <p class="fresh" id="postsFresh"></p>
+        </div>
+        <div class="posts-controls">
+          <div class="tabs" id="platformTabs" role="tablist"></div>
+          <label class="select select--boxed"><span class="visually-hidden">Sort posts</span><select id="sortSelect" aria-label="Sort posts"><option value="likes">Most liked first</option><option value="engagement">Highest engagement rate</option><option value="newest">Newest first</option></select></label>
+          <div class="toggle" id="viewToggle" aria-label="Display"></div>
+        </div>
+      </div>
+      <div class="chip-row" id="creatorChips" aria-label="Filter by who is on camera"></div>
+      <div class="ptimeline">
+        <div class="ptimeline__head">
+          <h3 class="block-title">Posting timeline <button class="info" data-tip="Every post in the selected period, by brand and day. Bigger dots got more engagement. Click a dot to open the post.">i</button></h3>
+          <span class="muted small" id="timelineNote"></span>
+        </div>
+        <div id="postTimeline"></div>
+      </div>
+      <p class="creative-note" id="creativeNote" hidden></p>
+      <div class="grid grid--posts" id="postGrid"></div>
+      <div class="grid-more"><button class="btn btn--ghost" id="showAllBtn" type="button" hidden></button></div>
+      <p class="source" id="postsSource"></p>
+      <p class="sowhat" id="postsSowhat"></p>
+    </section>
+
+
+    <!-- What's working -->
+    <section class="section" id="working">
+      <div class="section__head">
+        <div>
+          <p class="eyebrow">Across every competitor post</p>
+          <h2 class="section__title">What's working right now</h2>
+        </div>
+        <span class="muted small" id="workingScope"></span>
+      </div>
+      <div class="working" id="whatsWorking"></div>
+      <div class="two-col mt">
+        <div>
+          <h3 class="block-title">Engagement by format <button class="info" data-tip="Average engagement per format, across competitor posts.">i</button></h3>
+          <div id="formatChart" class="bars"></div>
+        </div>
+        <div>
+          <h3 class="block-title">Engagement by who's on camera <button class="info" data-tip="Dermatologist: a doctor speaks to camera. Creator: an influencer or a real customer. Brand: made by the brand itself.">i</button></h3>
+          <div id="creatorChart" class="bars"></div>
+        </div>
+      </div>
+      <div class="mt">
+        <h3 class="block-title">When competitors post <button class="info" data-tip="Number of posts by day and time of day (Paris time) in the selected period. Darker = more posts. The figure under each count is the average engagement.">i</button></h3>
+        <div id="timeHeatmap"></div>
+        <p class="sowhat sowhat--inline" id="timeSowhat"></p>
+      </div>
+    </section>
+
+
+    <!-- Brand health -->
+    <section class="section section--soft" id="health">
+      <div class="section__head">
+        <div>
+          <p class="eyebrow">Vichy vs. competitors</p>
+          <h2 class="section__title">Brand health</h2>
+          <p class="fresh" id="healthFresh"></p>
+        </div>
+        <span class="muted small" id="healthPeriod"></span>
+      </div>
+      <div class="kpis" id="kpiRow"></div>
+      <div class="two-col">
+        <div>
+          <h3 class="block-title">Share of engagement <button class="info" data-tip="Each brand's share of all likes on the tracked brands' posts in the selected period (Instagram, TikTok and YouTube). It shows who is winning attention with their own content.">i</button></h3>
+          <div id="sovChart" class="bars"></div>
+          <p class="sowhat" id="sovSowhat"></p>
+        </div>
+        <div>
+          <h3 class="block-title">Instagram engagement rate <button class="info" data-tip="Average likes per Instagram post divided by the account's followers. It shows how much of each audience actually reacts, so big and small accounts can be compared fairly.">i</button></h3>
+          <div id="erChart" class="bars"></div>
+          <p class="sowhat" id="erSowhat"></p>
+        </div>
+      </div>
+      <div class="mt">
+        <h3 class="block-title">Audience by platform <button class="info" data-tip="Followers on each brand's main account, as shown on the public profile on the date checked.">i</button></h3>
+        <div id="audienceTable"></div>
+      </div>
+      <p class="source" id="healthSource"></p>
+    </section>
+
+
+    <!-- In the news -->
+    <section class="section" id="news">
+      <div class="section__head">
+        <div>
+          <p class="eyebrow">Press coverage</p>
+          <h2 class="section__title">In the news</h2>
+          <p class="fresh" id="newsFresh"></p>
+        </div>
+      </div>
+      <p class="sowhat" id="newsSowhat"></p>
+      <div class="notice" id="newsNotice" hidden>
+        <p><strong>Not tracked yet.</strong> Press coverage comes from Google News in English and French, free and public. It updates about every hour once the news engine has run.</p>
+      </div>
+      <div class="news" id="newsBody">
+        <div>
+          <h3 class="block-title">Share of press coverage <button class="info" data-tip="Each brand's share of all news articles about the seven brands in the selected period, from Google News (English and French). A simple, free stand-in for share of voice in the press.">i</button></h3>
+          <div id="pressChart" class="bars"></div>
+        </div>
+        <div>
+          <div class="news__head">
+            <h3 class="block-title">Latest articles</h3>
+            <div class="chip-row chip-row--tight" id="newsChips"></div>
+          </div>
+          <div id="newsList" class="news__list"></div>
+        </div>
+      </div>
+      <p class="source" id="newsSource"></p>
+    </section>
+
+
+    <!-- Social listening -->
+    <section class="section" id="listening">
+      <div class="section__head">
+        <div>
+          <p class="eyebrow">What people say about Vichy</p>
+          <h2 class="section__title">Social listening</h2>
+        </div>
+        <div class="tabs" id="sentimentTabs" role="tablist"></div>
+      </div>
+      <div class="notice" id="listeningNotice" hidden>
+        <p><strong>Not tracked yet.</strong> Listening will cover comments on the brands' own posts, Reddit threads and YouTube comments, all public and free. It starts with the daily updates.</p>
+      </div>
+      <div class="listening" id="listeningBody">
+        <div class="listening__side">
+          <h3 class="block-title">Sentiment by platform</h3>
+          <div id="sentimentChart"></div>
+          <h3 class="block-title mt">Top themes</h3>
+          <div id="themeList" class="rank-list"></div>
+          <p class="sowhat" id="listenSowhat"></p>
+        </div>
+        <div class="listening__feed" id="mentionFeed"></div>
+      </div>
+    </section>
+
+
+    <!-- Trends -->
+    <section class="section section--soft" id="trends">
+      <div class="section__head">
+        <div>
+          <p class="eyebrow">Right now</p>
+          <h2 class="section__title">Trends</h2>
+        </div>
+      </div>
+      <div class="notice" id="trendsNotice" hidden>
+        <p><strong>Not tracked yet.</strong> Trends will come from Google Trends and TikTok Creative Center, both free and public. They start with the daily updates.</p>
+      </div>
+      <div class="two-col" id="trendsBody">
+        <div>
+          <h3 class="block-title">Rising search keywords <button class="info" data-tip="Google Trends interest (0 to 100) and how much it moved since the last period. These scores compare interest. They aren't search volumes.">i</button></h3>
+          <div id="keywordList" class="rank-list"></div>
+          <p class="sowhat" id="kwSowhat"></p>
+        </div>
+        <div>
+          <h3 class="block-title">Growing hashtags <button class="info" data-tip="Hashtags picking up speed on TikTok and Instagram, and how relevant each one is to Vichy.">i</button></h3>
+          <div id="hashtagList" class="tag-table"></div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- Campaign starters -->
+    <section class="section section--ideas claude-only" id="ideas">
+      <div class="section__head">
+        <div>
+          <p class="eyebrow">From insight to idea</p>
+          <h2 class="section__title">Campaign starters</h2>
+        </div>
+        <button class="btn btn--light" id="ideasBtn" type="button">Get this week's ideas</button>
+      </div>
+      <p class="muted ideas__intro">Three starting points for Vichy, built from this week's posts, trends and conversations. Use them to open a brainstorm, then make them your own.</p>
+      <div class="ideas" id="ideasGrid"></div>
+    </section>
+
+
+    <!-- Calendar -->
+    <section class="section" id="calendar">
+      <div class="section__head">
+        <div>
+          <p class="eyebrow">Plan ahead</p>
+          <h2 class="section__title">Marketing calendar</h2>
+        </div>
+      </div>
+      <div class="timeline" id="timeline"></div>
+    </section>
+
+    <!-- Data status -->
+    <section class="section section--soft" id="status">
+      <div class="section__head">
+        <div>
+          <p class="eyebrow">Behind the numbers</p>
+          <h2 class="section__title">Data status</h2>
+        </div>
+      </div>
+      <div id="statusTable"></div>
+      <p class="source">YouTube and News update automatically on GitHub, with no computer needed. Instagram, TikTok, Reddit, Trends and LinkedIn are updated by hand. This page checks for new data every 10 minutes.</p>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer__grid">
+      <div>
+        <p class="footer__brand">IGNITE</p>
+        <p class="muted small">An independent project by Mehul.</p>
+      </div>
+      <div>
+        <p class="footer__head">Sections</p>
+        <a href="#brief">The brief</a><a href="#posts">Competitor posts</a><a href="#listening">Listening</a><a href="#calendar">Calendar</a>
+      </div>
+    </div>
+    <details class="footer__how" id="method">
+      <summary>How Ignite works</summary>
+      <p>Ignite tracks what Vichy and six competitors (La Roche-Posay, Avène, Bioderma, CeraVe, Eucerin, Klorane) publish on their public Instagram, TikTok and YouTube accounts. Every number comes from those public pages: likes, comments and views as shown on each post, and followers as shown on each profile. Nothing is estimated or made up. Sections that aren't tracked yet say so.</p>
+      <p>How to read it: Instagram engagement is likes divided by followers; TikTok and YouTube engagement is likes and comments divided by views. The two aren't compared directly. Share of engagement is each brand's share of all likes on the tracked posts. Times are Paris time. The tool is free and built only on public data.</p>
+    </details>
+    <p class="footer__legal">Ignite is an independent project. It isn't affiliated with or endorsed by Vichy Laboratoires, L'Oréal or any brand shown. Brand names belong to their owners. All data comes from public sources.</p>
+    <p class="footer__legal" id="footerUpdated"></p>
+  </footer>
+
+  <!-- Quick view drawer -->
+  <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+  <aside class="drawer" id="drawer" aria-hidden="true" aria-label="Post details">
+    <div class="drawer__head">
+      <span class="eyebrow" id="drawerEyebrow">Quick view</span>
+      <button class="icon-btn" id="drawerClose" aria-label="Close">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="drawer__body" id="drawerBody"></div>
+  </aside>
+
+  <!-- Ask panel -->
+  <div class="drawer-backdrop" id="askBackdrop" hidden></div>
+  <aside class="drawer drawer--ask" id="askPanel" aria-hidden="true" aria-label="Ask Ignite">
+    <div class="drawer__head">
+      <span class="eyebrow">Ask Ignite</span>
+      <button class="icon-btn" id="askClose" aria-label="Close">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="ask-thread" id="askThread"></div>
+    <form class="ask-compose" id="askForm2" autocomplete="off">
+      <input id="askInput2" type="text" placeholder="Ask a follow-up" aria-label="Ask a follow-up question" />
+      <button type="submit">Ask</button>
+    </form>
+  </aside>
+
+  <!-- Search overlay -->
+  <div class="search" id="search" hidden>
+    <div class="search__inner">
+      <div class="search__bar">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="searchInput" type="search" placeholder="Search a brand, product or topic" autocomplete="off" />
+        <button class="icon-btn" id="searchClose" aria-label="Close search">
+          <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div class="search__popular" id="searchPopular"></div>
+      <div class="search__results" id="searchResults"></div>
+    </div>
+  </div>
+
+  <div class="tooltip" id="tooltip" role="tooltip" hidden></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/insights.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/ask.js"></script>
+</body>
+</html>

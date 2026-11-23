@@ -1,0 +1,32 @@
+{
+  "_note": "Google News searches per brand (free RSS, no key). Edit the words in quotes to widen or narrow coverage.",
+  "Vichy": [
+    "Vichy skincare",
+    "Vichy \"Minéral 89\"",
+    "Vichy Liftactiv",
+    "Vichy Dercos",
+    "Vichy soin peau",
+    "\"Vichy Laboratoires\""
+  ],
+  "La Roche-Posay": [
+    "\"La Roche-Posay\" skincare",
+    "\"La Roche-Posay\" Anthelios OR Effaclar OR Cicaplast",
+    "\"La Roche-Posay\" soin peau"
+  ],
+  "Avène": [
+    "\"Eau Thermale Avène\"",
+    "Avène skincare"
+  ],
+  "Bioderma": [
+    "Bioderma"
+  ],
+  "CeraVe": [
+    "CeraVe"
+  ],
+  "Eucerin": [
+    "Eucerin"
+  ],
+  "Klorane": [
+    "Klorane"
+  ]
+}

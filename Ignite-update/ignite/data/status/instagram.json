@@ -1,0 +1,9 @@
+{
+ "source": "Instagram",
+ "engine": "manual",
+ "schedule": "When updated by hand",
+ "last_run": "2026-11-21T23:20:00Z",
+ "ok": true,
+ "items": 74,
+ "message": "Followers and posts entered by hand"
+}

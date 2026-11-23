@@ -1,0 +1,9 @@
+{
+ "source": "Reddit",
+ "engine": "manual",
+ "schedule": "When updated by hand",
+ "last_run": "",
+ "ok": null,
+ "items": 0,
+ "message": "Not collected yet"
+}
