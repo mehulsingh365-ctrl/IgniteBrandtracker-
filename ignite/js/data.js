@@ -38,10 +38,23 @@
     });
   }
 
-  async function fetchCSV(url) {
-    const res = await fetch(url, { cache: "no-store" });
+  // Data is read straight from the GitHub repository, so every automatic update shows up
+  // within a few minutes, with no new Vercel deployment needed. If GitHub can't be reached,
+  // the copy that came with this site is used instead.
+  const REMOTE = "https://raw.githubusercontent.com/mehulsingh365-ctrl/IgniteBrandtracker-/main/ignite/";
+  async function fetchText(path) {
+    const bust = "?t=" + Math.floor(Date.now() / 60000);
+    try {
+      const r = await fetch(REMOTE + path + bust, { cache: "no-store" });
+      if (r.ok) return await r.text();
+    } catch (e) { /* fall back to the local copy */ }
+    const res = await fetch(path, { cache: "no-store" });
     if (!res.ok) throw new Error(res.status);
-    return parseCSV(await res.text());
+    return await res.text();
+  }
+
+  async function fetchCSV(url) {
+    return parseCSV(await fetchText(url));
   }
 
   // Every tab is read from data/<tab>.csv in this site. There is no sample fallback:
@@ -64,7 +77,7 @@
   const SOURCES = ["instagram", "tiktok", "youtube", "news", "reddit", "trends", "linkedin"];
 
   async function loadJSON(url) {
-    try { const r = await fetch(url, { cache: "no-store" }); return r.ok ? await r.json() : null; } catch (e) { return null; }
+    try { return JSON.parse(await fetchText(url)); } catch (e) { return null; }
   }
 
   window.loadPulseData = async function () {

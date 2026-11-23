@@ -517,19 +517,21 @@
         <span class="news__meta"><i class="dot" style="background:${color(n.brand)}"></i>${esc(n.brand)} · ${esc(n.source || "News")} · ${dateFmt(n.date)}${n.time ? ` ${esc(n.time)}` : ""}${n.language === "fr" ? " · FR" : ""}</span>
         <span class="news__title">${esc(n.title)}</span>
       </a>`).join("") : `<div class="empty">No articles for this brand in this period.</div>`;
-    $("newsSource").textContent = `Source: Google News search results in English and French. Headlines link to the original article. Collected automatically every 2 hours.`;
+    $("newsSource").textContent = `Source: Google News search results in English and French. Headlines link to the original article. Collected automatically about every hour.`;
   }
 
   /* ---------- render: data status ---------- */
   const SOURCE_ORDER = ["youtube", "news", "instagram", "tiktok", "reddit", "trends", "linkedin"];
   function renderStatus() {
     const el = $("statusTable"); if (!el) return;
-    const lateAfter = st => (/2 hours/.test(st.schedule) ? 6 : /Twice/.test(st.schedule) ? 30 : 50) * 3600000;
+    const lateAfter = st => (/hour/.test(st.schedule) ? 6 : /Twice/.test(st.schedule) ? 30 : 50) * 3600000;
+    const ENGINE = { cloud: "Automatic · runs on GitHub, no computer needed", manual: "Updated by hand" };
     const rows = SOURCE_ORDER.map(k => DATA.status[k]).filter(Boolean).map(st => {
       const age = st.last_run ? Date.now() - new Date(st.last_run).getTime() : null;
-      const state = st.ok === false ? ["bad", "Failed"] : !st.last_run ? ["off", "Not started"] : age > lateAfter(st) ? ["late", "Late"] : ["ok", "Working"];
+      const state = st.engine === "manual" ? (st.last_run ? ["off", "Manual"] : ["off", "Not collected"])
+        : st.ok === false ? ["bad", "Failed"] : !st.last_run ? ["off", "Not started"] : age > lateAfter(st) ? ["late", "Late"] : ["ok", "Working"];
       return `<tr>
-        <td><strong>${esc(st.source)}</strong><small>${st.engine === "cloud" ? "Cloud · runs with no computer on" : "Claude browser · needs the Mac awake"}</small></td>
+        <td><strong>${esc(st.source)}</strong><small>${ENGINE[st.engine] || "Updated by hand"}</small></td>
         <td>${esc(st.schedule)}</td>
         <td>${st.last_run ? `${relTime(st.last_run)}<small>${new Date(st.last_run).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</small>` : "—"}</td>
         <td><span class="status status--${state[0]}">${state[1]}</span><small>${esc(st.message || "")}</small></td>

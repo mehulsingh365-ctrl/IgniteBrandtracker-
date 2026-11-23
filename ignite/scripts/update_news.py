@@ -1,10 +1,10 @@
 """
 Collects recent press articles about Vichy and its competitors from Google News
-RSS feeds (free, public, no key). Runs on GitHub Actions every 2 hours.
+RSS feeds (free, public, no key). Runs on GitHub Actions about every hour.
 
 Writes data/news.csv (last 45 days, de-duplicated) and data/status/news.json.
 """
-import csv, json, os, re, sys, unicodedata, urllib.parse, urllib.request
+import csv, json, os, re, sys, time, unicodedata, urllib.parse, urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
@@ -17,13 +17,27 @@ FIELDS = ["date", "time", "brand", "language", "title", "source", "link"]
 EDITIONS = [("en", "hl=en-GB&gl=GB&ceid=GB:en"), ("fr", "hl=fr&gl=FR&ceid=FR:fr")]
 PARIS = timezone(timedelta(hours=1))
 KEEP_DAYS = 45
+START = time.time()
 
 
 def fetch(query, edition):
+    """One Google News search. Waits between searches and retries, because Google
+    refuses searches that come too fast."""
     url = f"https://news.google.com/rss/search?q={urllib.parse.quote(query + ' when:30d')}&{edition}"
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (IgniteTracker; +https://github.com)"})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return r.read()
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        "Accept-Language": "en-GB,en;q=0.9,fr;q=0.8"})
+    last = None
+    for wait in (0, 20, 60):
+        if wait and time.time() - START > 600:  # keep the whole run under ~10 minutes
+            break
+        time.sleep(wait + 3)
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                return r.read()
+        except Exception as e:
+            last = e
+    raise last
 
 
 def parse(xml_bytes):
@@ -54,10 +68,33 @@ def norm(t):
 BRAND_WORDS = {"Vichy": ["vichy"], "La Roche-Posay": ["roche posay", "larocheposay"], "Avène": ["avene"],
                "Bioderma": ["bioderma"], "CeraVe": ["cerave"], "Eucerin": ["eucerin"], "Klorane": ["klorane"]}
 
+# Vichy and La Roche-Posay are also French towns. For these two brands a headline must
+# also mention skincare, a product line or the company, so town news is left out.
+SKINCARE_WORDS = ["skin", "skincare", "beauty", "beaute", "peau", "soin", "soins", "creme", "cream", "serum",
+                  "sunscreen", "spf", "solaire", "sun care", "moisturi", "hydrat", "acne", "anti aging", "anti age",
+                  "wrinkle", "rides", "derm", "routine", "cosmet", "pharmac", "products", "produit", "launch",
+                  "lancement", "brand", "marque", "campaign", "campagne", "oreal", "shampoo", "shampooing",
+                  "hair", "cheveux", "makeup", "maquillage", "review", "test", "deal", "black friday", "sale",
+                  "promo", "advent", "calendrier", "gift", "cadeau", "influenc", "tiktok", "instagram",
+                  "mineral 89", "liftactiv", "dercos", "normaderm", "neovadiol", "capital soleil", "dermablend",
+                  "racing team", "sailing", "ac75", "america s cup", "living lab", "health", "gaming", "streamer",
+                  "sponsor", "partner", "partenaire", "partenariat", "foundation", "fondation", "patients", "cancer",
+                  "anthelios", "effaclar", "cicaplast", "lipikar", "toleriane", "hyalu b5", "mela b3", "vitamin c"]
+NEEDS_CONTEXT = {"Vichy", "La Roche-Posay"}
+
+
+def relevant(brand, title):
+    t = norm(title)
+    if not any(w in t for w in BRAND_WORDS.get(brand, [norm(brand)])):
+        return False
+    if brand in NEEDS_CONTEXT:
+        return any(w in t for w in SKINCARE_WORDS)
+    return True
+
 
 def write_status(ok, items, message):
     with open(STATUS, "w", encoding="utf-8") as f:
-        json.dump({"source": "News", "engine": "cloud", "schedule": "Every 2 hours",
+        json.dump({"source": "News", "engine": "cloud", "schedule": "Every hour",
                    "last_run": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                    "ok": ok, "items": items, "message": message}, f, indent=1, ensure_ascii=False)
 
@@ -68,13 +105,16 @@ def main():
     if os.path.exists(OUT):
         with open(OUT, newline="", encoding="utf-8") as f:
             existing = list(csv.DictReader(f))
+    # re-check what is already saved, so older town news is cleared too
+    existing = [r for r in existing if relevant(r["brand"], r["title"])]
     seen = {norm(r["title"]) + "|" + r["brand"] for r in existing}
-    added, errors = 0, 0
+    added, errors, tried = 0, 0, 0
     for brand, qs in queries.items():
         if brand.startswith("_"):
             continue
         for q in qs:
             for lang, edition in EDITIONS:
+                tried += 1
                 try:
                     items = parse(fetch(q, edition))
                 except Exception as e:
@@ -86,8 +126,7 @@ def main():
                     if key in seen:
                         continue
                     # keep only articles that actually name the brand
-                    words = BRAND_WORDS.get(brand, [norm(brand)])
-                    if not any(w in norm(it["title"]) for w in words):
+                    if not relevant(brand, it["title"]):
                         continue
                     seen.add(key)
                     existing.append({"date": it["dt"].date().isoformat(), "time": it["dt"].strftime("%H:%M"),
@@ -100,8 +139,11 @@ def main():
         w = csv.DictWriter(f, fieldnames=FIELDS)
         w.writeheader()
         w.writerows(rows)
-    ok = errors == 0 or added > 0 or len(rows) > 0
-    write_status(ok, len(rows), f"{added} new articles" + (f", {errors} searches failed" if errors else ""))
+    ok = errors < tried  # fails only if no search at all got through
+    msg = f"{added} new articles" + (f", {errors} of {tried} searches failed" if errors else "")
+    if not ok:
+        msg = f"Google News refused all {tried} searches; showing articles saved earlier"
+    write_status(ok, len(rows), msg)
     print(f"Added {added}, kept {len(rows)}, errors {errors}")
 
 

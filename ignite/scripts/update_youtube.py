@@ -1,6 +1,6 @@
 """
 Refreshes YouTube posts in data/posts/youtube.csv using the official
-YouTube Data API v3 (free key). Runs on GitHub Actions every 2 hours.
+YouTube Data API v3 (free key). Runs on GitHub Actions about every hour.
 
 - Updates views / likes / comments for every YouTube row already in the file.
 - Adds new uploads from the last 7 days for each channel in scripts/channels.json.
@@ -31,7 +31,7 @@ def video_id(link):
 
 
 def write_status(ok, items, message):
-    status = {"source": "YouTube", "engine": "cloud", "schedule": "Every 2 hours",
+    status = {"source": "YouTube", "engine": "cloud", "schedule": "Every hour",
               "last_run": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
               "ok": ok, "items": items, "message": message}
     with open(STATUS_PATH, "w", encoding="utf-8") as f:

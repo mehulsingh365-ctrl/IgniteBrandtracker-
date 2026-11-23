@@ -1,9 +1,9 @@
 {
  "source": "Google Trends & TikTok hashtags",
- "engine": "browser",
- "schedule": "Once a day",
+ "engine": "manual",
+ "schedule": "When updated by hand",
  "last_run": "",
  "ok": null,
  "items": 0,
- "message": "Starts with the browser runs"
+ "message": "Not collected yet"
 }

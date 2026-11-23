@@ -1,9 +1,9 @@
 {
  "source": "LinkedIn",
- "engine": "browser",
- "schedule": "Twice a day",
+ "engine": "manual",
+ "schedule": "When updated by hand",
  "last_run": "",
  "ok": null,
  "items": 0,
- "message": "Needs a LinkedIn login in the Claude browser"
+ "message": "Not collected yet"
 }

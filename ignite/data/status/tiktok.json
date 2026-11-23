@@ -1,9 +1,9 @@
 {
  "source": "TikTok",
- "engine": "browser",
- "schedule": "Twice a day",
+ "engine": "manual",
+ "schedule": "When updated by hand",
  "last_run": "2026-11-16T01:15:00Z",
  "ok": true,
  "items": 16,
- "message": "Vichy and La Roche-Posay only so far"
+ "message": "Vichy and La Roche-Posay posts entered by hand"
 }
