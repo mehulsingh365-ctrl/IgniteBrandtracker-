@@ -1,8 +1,8 @@
 {
  "source": "YouTube",
  "engine": "cloud",
- "schedule": "Every 2 hours",
- "last_run": "2026-11-23T20:16:09Z",
+ "schedule": "Every hour",
+ "last_run": "2026-11-24T09:59:48Z",
  "ok": true,
  "items": 11,
  "message": "Refreshed 11 videos"
