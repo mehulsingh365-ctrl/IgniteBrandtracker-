@@ -7,7 +7,7 @@
   const FOCUS = CFG.focusBrand;
   const $ = id => document.getElementById(id);
   const state = { market: "All", category: "All", platform: "All", sentiment: "All", view: null, creator: "All",
-    period: "30", from: "", to: "", sort: "likes", showAll: false, newsBrand: "All" };
+    period: "30", from: "", to: "", sort: "newest", showAll: false, newsBrand: "All" };
   const PLATFORMS = ["All", "Instagram", "TikTok", "YouTube", "LinkedIn"];
   const CREATORS = ["All", "Dermatologist", "Creator", "Brand"];
   const creatorType = p => p.creator_type || (/dermatolog|\bderms?\b|doctor|\bdr\.?\s/i.test(p.topic + " " + p.summary) ? "Dermatologist" : /@[\w.]+|creator|influencer|testimonial|her daughter|real[- ]people/i.test(p.topic + " " + p.summary) ? "Creator" : "Brand");
@@ -99,9 +99,9 @@
       : "No data yet";
     $("heroLabel").textContent = updated ? `Updated ${updated}` : "";
     $("footerUpdated").textContent = updated ? `Last updated ${updated}.` : "";
-    const lead = DATA.insights.find(i => /high/i.test(i.priority)) || DATA.insights[0];
-    if (lead) { $("heroTitle").textContent = lead.title; $("heroText").textContent = lead.detail; }
-    else { $("heroTitle").textContent = "This week's brief is on its way"; $("heroText").textContent = ""; }
+    const lead = (window.PulseTrends ? PulseTrends.compute(DATA) : [])[0];
+    if (lead) { $("heroTitle").textContent = lead.title; $("heroText").textContent = `${lead.evidence} What to do: ${lead.action}`; }
+    else { $("heroTitle").textContent = "Not enough recent data for trends yet"; $("heroText").textContent = ""; }
   }
 
   function renderFilters() {
@@ -282,11 +282,16 @@
   }
 
   /* ---------- render: brief ---------- */
-  function renderBrief(insight) {
-    $("insightList").innerHTML = DATA.insights.slice(0, 3).map(i => `
-      <li><div><h3>${esc(i.title)}</h3><p>${esc(i.detail)}</p><p class="brief__meta">${esc(i.section)}${i.date ? ` · ${dateFmt(i.date)}` : ""}</p></div></li>`).join("");
-    $("flagList").innerHTML = insight.flags.map(f => `
-      <div class="flag flag--${f.level}"><p class="eyebrow">${esc(f.label)}</p><p>${esc(f.text)}</p></div>`).join("");
+  function renderBrief() {
+    const trends = window.PulseTrends ? PulseTrends.compute(DATA) : [];
+    const link = t => t.link ? ` <a class="brief__link" href="${esc(t.link)}" target="_blank" rel="noopener">See it</a>` : "";
+    $("insightList").innerHTML = trends.length ? trends.slice(0, 3).map(t => `
+      <li><div><p class="brief__meta brief__meta--top">${esc(t.tag)} · ${esc(t.window)}</p><h3>${esc(t.title)}</h3><p>${esc(t.evidence)}${link(t)}</p>
+      <p class="brief__action"><strong>What to do:</strong> ${esc(t.action)}</p></div></li>`).join("")
+      : `<li><div><h3>Not enough recent data yet</h3><p>Trends appear once there are posts or articles from the last two weeks.</p></div></li>`;
+    $("flagList").innerHTML = trends.slice(3, 8).map(t => `
+      <div class="flag flag--${t.level || "info"}"><p class="eyebrow">${esc(t.tag)} · ${esc(t.window)}</p><p><strong>${esc(t.title)}</strong></p>
+      <p>${esc(t.evidence)}${link(t)}</p><p class="flag__action">What to do: ${esc(t.action)}</p></div>`).join("");
   }
 
   /* ---------- render: health ---------- */
@@ -317,8 +322,8 @@
     }
 
     // KPI tiles (Vichy)
-    const ig = fol(FOCUS, "Instagram"), tt = fol(FOCUS, "TikTok");
-    const totalFol = (ig ? ig.followers : 0) + (tt ? tt.followers : 0);
+    const ig = fol(FOCUS, "Instagram");
+    const totalFol = ig ? ig.followers : 0;
     const igPrev = ig && prevOf(ig);
     const ranked = brands.map(b => ({ b, s: share(b) })).sort((a, b) => b.s - a.s);
     const rank = ranked.findIndex(x => x.b === FOCUS) + 1;
@@ -326,8 +331,8 @@
     const compAvg = compBrands.length ? compBrands.reduce((a, b) => a + avgLikes(b), 0) / compBrands.length : 0;
     const mostActive = brands.filter(b => b !== FOCUS).sort((a, b) => (count[b] || 0) - (count[a] || 0))[0];
     const tiles = [
-      { label: "Followers", tip: "Vichy's followers on Instagram and TikTok combined, from the public profiles.", val: fmt(totalFol),
-        sub: `Instagram ${ig ? fmt(ig.followers) : "—"} · TikTok ${tt ? fmt(tt.followers) : "—"}${igPrev ? ` · ${delta(ig.followers, igPrev.followers)}` : ""}` },
+      { label: "Instagram followers", tip: "Vichy's followers on Instagram, from the public profile. TikTok followers are shown live in the TikTok section.", val: fmt(totalFol),
+        sub: `${ig ? `Checked ${dateFmt(ig.date)}` : "—"}${igPrev ? ` · ${delta(ig.followers, igPrev.followers)}` : ""}` },
       { label: "Posts published", tip: "Vichy posts in the selected period, across the platforms we track.", val: String(count[FOCUS] || 0),
         sub: mostActive ? `Most active competitor: ${esc(mostActive)} (${count[mostActive] || 0})` : "" },
       { label: "Average likes per post", tip: "Total likes divided by number of posts in the selected period.", val: fmt(avgLikes(FOCUS)),
@@ -521,19 +526,19 @@
   }
 
   /* ---------- render: data status ---------- */
-  const SOURCE_ORDER = ["youtube", "news", "instagram", "tiktok", "reddit", "trends", "linkedin"];
+  const SOURCE_ORDER = ["youtube", "news", "instagram", "tiktok"];
   function renderStatus() {
     const el = $("statusTable"); if (!el) return;
     const lateAfter = st => (/hour/.test(st.schedule) ? 6 : /Twice/.test(st.schedule) ? 30 : 50) * 3600000;
-    const ENGINE = { cloud: "Automatic · runs on GitHub, no computer needed", manual: "Updated by hand" };
+    const ENGINE = { cloud: "Automatic · runs on GitHub, no computer needed", manual: "Updated by hand", embed: "Shown live by TikTok on this page" };
     const rows = SOURCE_ORDER.map(k => DATA.status[k]).filter(Boolean).map(st => {
       const age = st.last_run ? Date.now() - new Date(st.last_run).getTime() : null;
-      const state = st.engine === "manual" ? (st.last_run ? ["off", "Manual"] : ["off", "Not collected"])
+      const state = st.engine === "embed" ? ["ok", "Live"] : st.engine === "manual" ? (st.last_run ? ["off", "Manual"] : ["off", "Not collected"])
         : st.ok === false ? ["bad", "Failed"] : !st.last_run ? ["off", "Not started"] : age > lateAfter(st) ? ["late", "Late"] : ["ok", "Working"];
       return `<tr>
         <td><strong>${esc(st.source)}</strong><small>${ENGINE[st.engine] || "Updated by hand"}</small></td>
         <td>${esc(st.schedule)}</td>
-        <td>${st.last_run ? `${relTime(st.last_run)}<small>${new Date(st.last_run).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</small>` : "—"}</td>
+        <td>${st.engine === "embed" ? "Always current" : st.last_run ? `${relTime(st.last_run)}<small>${new Date(st.last_run).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</small>` : "—"}</td>
         <td><span class="status status--${state[0]}">${state[1]}</span><small>${esc(st.message || "")}</small></td>
         <td>${st.items ? Number(st.items).toLocaleString("en-GB") : "—"}</td>
       </tr>`;
@@ -620,21 +625,38 @@
   }
   function closeSearch() { $("search").hidden = true; }
 
+  /* ---------- render: TikTok live feeds ---------- */
+  const TT = { "Vichy": "vichylaboratoires", "La Roche-Posay": "larocheposay", "CeraVe": "cerave", "Avène": "avene",
+               "Bioderma": "biodermafrance", "Eucerin": "eucerin", "Klorane": "klorane" };
+  let ttBrand = null;
+  function renderTikTok(brand) {
+    const chips = $("ttChips"), box = $("ttEmbed"); if (!chips || !box) return;
+    if (!brand && ttBrand) return;            // already showing; don't reload on every data refresh
+    ttBrand = brand || FOCUS;
+    chips.innerHTML = Object.keys(TT).map(b => `<button type="button" data-tt="${esc(b)}" aria-pressed="${b === ttBrand}">${esc(b)}</button>`).join("");
+    const h = TT[ttBrand];
+    box.innerHTML = `<blockquote class="tiktok-embed" cite="https://www.tiktok.com/@${h}" data-unique-id="${h}" data-embed-type="creator" style="max-width:780px;min-width:288px;margin:0">
+      <section><a target="_blank" rel="noopener" href="https://www.tiktok.com/@${h}?refer=creator_embed">@${h} on TikTok</a></section></blockquote>`;
+    const old = document.getElementById("tt-embed-js"); if (old) old.remove();
+    const sc = document.createElement("script"); sc.id = "tt-embed-js"; sc.async = true; sc.src = "https://www.tiktok.com/embed.js";
+    document.body.appendChild(sc);
+  }
+  document.addEventListener("click", e => { const b = e.target.closest("[data-tt]"); if (b) renderTikTok(b.dataset.tt); });
+
   /* ---------- render all ---------- */
   function render() {
     const v = view();
     const insight = PulseInsights.generate(DATA, v);
     renderFilters(); renderPosts(v); renderBrief(insight); renderHealth(insight);
-    renderTrends(v, insight); renderListening(v, insight);
     renderWorking(v); renderCalendar(); renderNews(v); renderStatus();
-    $("postsFresh").textContent = fresh(["instagram", "tiktok", "youtube", "linkedin"]) ? `Updated: ${fresh(["instagram", "tiktok", "youtube", "linkedin"])}` : "";
-    $("healthFresh").textContent = fresh(["instagram", "tiktok"]) ? `Followers updated: ${fresh(["instagram", "tiktok"])}` : "";
+    $("postsFresh").textContent = fresh(["instagram", "youtube"]) ? `Updated: ${fresh(["instagram", "youtube"])}` : "";
+    $("healthFresh").textContent = fresh(["instagram"]) ? `Followers updated: ${fresh(["instagram"])}` : "";
     $("newsFresh").textContent = fresh(["news"]) ? `Updated ${relTime(DATA.status.news.last_run)}` : "";
     const ps = $("postsSowhat"); ps.innerHTML = insight.sowhat.posts || "";
     const pd = DATA.competitor_posts.map(p => p.date).filter(Boolean).sort();
     $("postsSource").textContent = pd.length ? `Source: public brand posts on ${DATA._meta.platforms.join(", ")}, ${longDate(pd[0])} – ${longDate(pd[pd.length - 1])}. Likes, comments and views as shown on each post when collected. Times in Paris time.` : "";
-    const idates = DATA.insights.map(i => i.date).filter(Boolean).sort();
-    $("briefSource").textContent = idates.length ? `Written ${longDate(idates[idates.length - 1])} from the posts above. Alerts update automatically with the data.` : "";
+    $("briefSource").textContent = `Worked out automatically from the live data each time the page loads (last data update ${relTime(DATA._meta.lastRun)}). Fixed rules, no AI: every number comes from the sources named on each trend.`;
+    renderTikTok();
   }
 
   /* ---------- events ---------- */

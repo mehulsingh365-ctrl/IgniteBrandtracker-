@@ -1,9 +1,9 @@
 {
  "source": "TikTok",
- "engine": "manual",
- "schedule": "When updated by hand",
- "last_run": "2026-11-16T01:15:00Z",
+ "engine": "embed",
+ "schedule": "Live",
+ "last_run": "",
  "ok": true,
- "items": 16,
- "message": "Vichy and La Roche-Posay posts entered by hand"
+ "items": 0,
+ "message": "Each brand's latest videos, shown by TikTok"
 }

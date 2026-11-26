@@ -73,8 +73,8 @@
   //   news.csv              ← Google News (cloud, every 2h)
   //   status/<source>.json  ← when each source last updated, and whether it worked
   const TABS = ["accounts", "insights", "calendar", "keywords", "hashtags", "listening", "news"];
-  const PLATFORMS = ["instagram", "tiktok", "youtube", "linkedin"];
-  const SOURCES = ["instagram", "tiktok", "youtube", "news", "reddit", "trends", "linkedin"];
+  const PLATFORMS = ["instagram", "youtube"];  // TikTok is shown as live TikTok feeds instead
+  const SOURCES = ["youtube", "news", "instagram", "tiktok"];
 
   async function loadJSON(url) {
     try { return JSON.parse(await fetchText(url)); } catch (e) { return null; }
@@ -88,6 +88,7 @@
     ]);
     const data = { kpis: [], products: [] };
     TABS.forEach((t, i) => { data[t] = tabs[i].rows; });
+    data.accounts = data.accounts.filter(a => a.platform !== "TikTok");  // TikTok counts are shown live by TikTok
     data.competitor_posts = posts.flatMap(r => r.rows);
     data.status = {};
     SOURCES.forEach((s, i) => { if (status[i]) data.status[s] = status[i]; });
