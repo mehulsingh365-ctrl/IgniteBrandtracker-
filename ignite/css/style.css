@@ -723,3 +723,11 @@ body:not(.has-ask) .ask-pill { background: var(--soft); color: var(--ink); }
 /* TikTok live feeds */
 #ttChips { margin: 18px 0 18px; }
 .tt-embed { min-height: 420px; }
+
+/* Hero: compact, text spread across the width (no picture) */
+.hero { min-height: 0; align-items: flex-start; }
+.hero__content { max-width: 1180px; width: 100%; padding-top: 92px; padding-bottom: 56px; }
+.hero__title { max-width: 1100px; margin: 16px 0 14px; }
+.hero__text { max-width: 900px; margin-bottom: 24px; }
+.ask-hero { max-width: 900px; }
+@media (max-width: 900px) { .hero__content { padding-top: 84px; padding-bottom: 40px; } }
