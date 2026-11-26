@@ -2,8 +2,8 @@
  "source": "Brand interest (Wikipedia)",
  "engine": "cloud",
  "schedule": "Once a day",
- "last_run": "",
- "ok": null,
- "items": 0,
- "message": "Starts with the first daily run"
+ "last_run": "2026-11-26T17:31:14Z",
+ "ok": true,
+ "items": 545,
+ "message": "5 of 7 brands found on Wikipedia; 18 weeks of history; no page for La Roche-Posay, Klorane"
 }
