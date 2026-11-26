@@ -2,8 +2,8 @@
  "source": "News",
  "engine": "cloud",
  "schedule": "Every hour",
- "last_run": "2026-11-26T17:33:51Z",
+ "last_run": "2026-11-26T17:41:51Z",
  "ok": true,
- "items": 119,
- "message": "20 new articles from Google News, Bing and beauty trade press"
+ "items": 123,
+ "message": "4 new articles (0 Google News, 4 Bing and trade press). Sources answering: Google 30/30, Bing 11/14, trade press 3/4"
 }
