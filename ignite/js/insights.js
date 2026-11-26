@@ -34,7 +34,9 @@ window.PulseInsights = (function () {
   function bestBy(rows, key, valueKey) {
     const groups = {};
     rows.forEach(r => { (groups[r[key]] = groups[r[key]] || []).push(Number(r[valueKey]) || 0); });
-    return Object.entries(groups).map(([name, v]) => ({ name, value: avg(v), n: v.length })).sort((a, b) => b.value - a.value);
+    // Typical value (median), so one viral post can't make a whole format or angle look best
+    const median = v => { const x = [...v].sort((a, b) => a - b), m = Math.floor(x.length / 2); return x.length % 2 ? x[m] : (x[m - 1] + x[m]) / 2; };
+    return Object.entries(groups).map(([name, v]) => ({ name, value: median(v), n: v.length })).sort((a, b) => (b.n >= 3) - (a.n >= 3) || b.value - a.value);
   }
 
   function generate(data, view) {

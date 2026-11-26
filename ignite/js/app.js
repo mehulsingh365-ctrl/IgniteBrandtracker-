@@ -472,19 +472,21 @@
     const simpleBars = rows => { const max = Math.max(...rows.map(r => r.value)) || 1; return rows.map((r, i) => `
       <div class="bar ${i === 0 ? "bar--hl" : ""}"><span class="bar__name">${esc(r.name)} <span class="muted">(${r.n})</span></span>
       <span class="bar__track"><span class="bar__fill" style="width:${(r.value / max) * 100}%;background:${i === 0 ? "var(--accent)" : "#c9c9c9"}"></span></span>
-      <span class="bar__val">${pct(r.value, 2)}</span></div>`).join(""); };
+      <span class="bar__val">${pct(r.value, 2)}</span></div>`).join("") + `<p class="muted small">Typical (middle) value per post.</p>`; };
     $("formatChart").innerHTML = simpleBars(byFormat);
     $("creatorChart").innerHTML = simpleBars(byCreator);
     const fmtBest = byFormat[0];
     const byBrand = {}; v.posts.filter(p => p.brand !== FOCUS).forEach(p => { byBrand[p.brand] = (byBrand[p.brand] || 0) + 1; });
     const active = Object.entries(byBrand).sort((a, b) => b[1] - a[1])[0] || ["—", 0];
-    const derm = comp.filter(p => /dermatolog/i.test(p.topic + " " + p.summary));
-    const dermEr = derm.length ? derm.reduce((s, p) => s + p.engagement_rate, 0) / derm.length : 0;
     renderThemes(scope.posts);
+    // Winning angle = who's on camera with the best typical engagement, only with at least 3 posts
+    const angleBest = byCreator.find(a => a.n >= 3);
+    const angleName = { Brand: "Brand-made content", Creator: "Creators and real customers", Dermatologist: "Dermatologist on camera" };
+    const few = n => n < 5 ? " · small sample" : "";
     $("whatsWorking").innerHTML = `
-      <div><h4>Best format</h4><p>${esc(fmtBest.name)}<small>${pct(fmtBest.value, 2)} avg engagement · ${fmtBest.n} post${fmtBest.n > 1 ? "s" : ""}</small></p></div>
+      <div><h4>Best format</h4><p>${esc(fmtBest.name)}<small>${pct(fmtBest.value, 2)} typical engagement · ${fmtBest.n} post${fmtBest.n > 1 ? "s" : ""}${few(fmtBest.n)}</small></p></div>
       <div><h4>Most active competitor</h4><p>${esc(active[0])}<small>${active[1]} post${active[1] > 1 ? "s" : ""} in this period</small></p></div>
-      <div><h4>Winning angle</h4><p>${derm.length ? "Dermatologist on camera" : "Teaching, not selling"}<small>${derm.length ? `${pct(dermEr, 2)} avg engagement · ${derm.length} post${derm.length > 1 ? "s" : ""}` : "From the best posts in this period"}</small></p></div>`;
+      <div><h4>Winning angle</h4><p>${angleBest ? esc(angleName[angleBest.name] || angleBest.name) : "Not enough posts yet"}<small>${angleBest ? `${pct(angleBest.value, 2)} typical engagement · ${angleBest.n} posts${few(angleBest.n)}` : "Needs at least 3 posts of one kind"}</small></p></div>`;
   }
 
   /* ---------- themes: what brands talk about, and what gets likes ---------- */
@@ -692,7 +694,9 @@
     $("newsFresh").textContent = fresh(["news"]) ? `Updated ${relTime(DATA.status.news.last_run)}` : "";
     const ps = $("postsSowhat"); ps.innerHTML = insight.sowhat.posts || "";
     const pd = DATA.competitor_posts.map(p => p.date).filter(Boolean).sort();
-    $("postsSource").textContent = pd.length ? `Source: public brand posts on ${DATA._meta.platforms.join(", ")}, ${longDate(pd[0])} – ${longDate(pd[pd.length - 1])}. Likes, comments and views as shown on each post when collected. Times in Paris time.` : "";
+    const igRows = DATA.competitor_posts.filter(p => p.platform === "Instagram");
+    const igStatus = DATA.status.instagram;
+    $("postsSource").textContent = pd.length ? `Source: public brand posts on ${DATA._meta.platforms.join(", ")}, ${longDate(pd[0])} – ${longDate(pd[pd.length - 1])}.${igRows.length && igStatus && igStatus.engine !== "cloud" ? ` Instagram: the latest ${igRows.length} public posts across the 7 brands (about 12 per brand), with likes as shown on ${dateFmt(String(igStatus.last_run).slice(0, 10))}; they update once Instagram is connected.` : ""} YouTube refreshes every hour. Times in Paris time.` : "";
     $("briefSource").textContent = `Worked out automatically from the live data each time the page loads (last data update ${relTime(DATA._meta.lastRun)}). Fixed rules, no AI: every number comes from the sources named on each trend.`;
     renderTikTok();
   }
