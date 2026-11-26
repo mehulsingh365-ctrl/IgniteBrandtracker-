@@ -17,6 +17,7 @@ window.PULSE_CONFIG = {
     "CeraVe": "#4E9A8A",
     "Eucerin": "#B04A5A",
     "Klorane": "#7A8B3D",
+    "The Ordinary": "#3A3A3A",
     "René Furterer": "#A0785A",
     "Ducray": "#5A6B8C"
   },
@@ -28,7 +29,8 @@ window.PULSE_CONFIG = {
     "Bioderma": "A pharmacy favourite that owns micellar water and sensitive skin.",
     "CeraVe": "Another L'Oréal sister brand, and the loudest voice on skin barrier with Gen Z on TikTok.",
     "Eucerin": "Beiersdorf's science-first brand, going head to head with Liftactiv on anti-ageing.",
-    "Klorane": "Pierre Fabre's haircare brand, competing with Dercos on hair loss."
+    "Klorane": "Pierre Fabre's haircare brand, competing with Dercos on hair loss.",
+    "The Ordinary": "DECIEM's science-first, affordable brand, built around ingredients like niacinamide and retinol."
   },
 
   popularSearches: ["Minéral 89", "Menopause", "Hair loss", "La Roche-Posay", "Skin barrier"]

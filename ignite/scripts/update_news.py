@@ -86,7 +86,8 @@ def norm(t):
 
 # words that must appear in the headline for it to count for that brand
 BRAND_WORDS = {"Vichy": ["vichy"], "La Roche-Posay": ["roche posay", "larocheposay"], "Avène": ["avene"],
-               "Bioderma": ["bioderma"], "CeraVe": ["cerave"], "Eucerin": ["eucerin"], "Klorane": ["klorane"]}
+               "Bioderma": ["bioderma"], "CeraVe": ["cerave"], "Eucerin": ["eucerin"], "Klorane": ["klorane"],
+               "The Ordinary": ["the ordinary", "deciem"]}
 
 # Vichy and La Roche-Posay are also French towns. For these two brands a headline must
 # also mention skincare, a product line or the company, so town news is left out.
@@ -100,7 +101,7 @@ SKINCARE_WORDS = ["skin", "skincare", "beauty", "beaute", "peau", "soin", "soins
                   "racing team", "sailing", "ac75", "america s cup", "living lab", "health", "gaming", "streamer",
                   "sponsor", "partner", "partenaire", "partenariat", "foundation", "fondation", "patients", "cancer",
                   "anthelios", "effaclar", "cicaplast", "lipikar", "toleriane", "hyalu b5", "mela b3", "vitamin c"]
-NEEDS_CONTEXT = {"Vichy", "La Roche-Posay"}
+NEEDS_CONTEXT = {"Vichy", "La Roche-Posay", "The Ordinary"}  # "the ordinary" is also an everyday phrase
 
 
 def relevant(brand, title, desc=""):
@@ -108,8 +109,10 @@ def relevant(brand, title, desc=""):
     t = norm(title + " " + desc)
     if not any(w in t for w in BRAND_WORDS.get(brand, [norm(brand)])):
         return False
+    if brand == "The Ordinary" and "out of the ordinary" in t and t.count("the ordinary") == 1:
+        return False
     if brand in NEEDS_CONTEXT:
-        return any(w in t for w in SKINCARE_WORDS)
+        return any(w in t for w in SKINCARE_WORDS + ["niacinamide", "retinol", "hyaluronic", "deciem", "estee lauder"])
     return True
 
 

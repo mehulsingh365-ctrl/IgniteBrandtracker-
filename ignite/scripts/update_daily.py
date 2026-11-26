@@ -15,7 +15,7 @@ from datetime import date, datetime, timedelta, timezone
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
 UA = {"User-Agent": "IgniteBrandTracker/1.0 (https://github.com/mehulsingh365-ctrl/IgniteBrandtracker-)"}
-BRANDS = ["Vichy", "La Roche-Posay", "CeraVe", "Avène", "Bioderma", "Eucerin", "Klorane"]
+BRANDS = ["Vichy", "La Roche-Posay", "CeraVe", "Avène", "Bioderma", "Eucerin", "Klorane", "The Ordinary"]
 
 # Wikipedia pages to try for each brand, first match wins. The town pages are never used.
 PAGES = {
@@ -24,13 +24,15 @@ PAGES = {
                               "La Roche-Posay Laboratoire Dermatologique", "Laboratoire dermatologique de La Roche-Posay"],
            "Avène": ["Eau thermale Avène", "Avène (marque)", "Laboratoires dermatologiques Avène"],
            "Bioderma": ["Bioderma"], "CeraVe": ["CeraVe"], "Eucerin": ["Eucerin"],
-           "Klorane": ["Klorane", "Klorane (marque)", "Laboratoires Klorane"]},
+           "Klorane": ["Klorane", "Klorane (marque)", "Laboratoires Klorane"],
+           "The Ordinary": ["The Ordinary (marque)", "The Ordinary (cosmétiques)", "Deciem"]},
     "en": {"Vichy": ["Vichy Laboratoires", "Vichy (cosmetics)", "Vichy (brand)"],
            "La Roche-Posay": ["La Roche-Posay (company)", "La Roche-Posay (brand)", "La Roche-Posay (cosmetics)",
                               "La Roche-Posay (skincare)", "La Roche-Posay Laboratoire Dermatologique"],
            "Avène": ["Eau Thermale Avène", "Avène (brand)"],
            "Bioderma": ["Bioderma"], "CeraVe": ["CeraVe"], "Eucerin": ["Eucerin"],
-           "Klorane": ["Klorane", "Klorane (brand)"]},
+           "Klorane": ["Klorane", "Klorane (brand)"],
+           "The Ordinary": ["The Ordinary (brand)", "The Ordinary (skincare)", "The Ordinary (cosmetics)", "Deciem"]},
 }
 TOWNS = {"vichy", "la roche posay", "avene"}
 SEARCH_HINT = {"fr": "marque cosmétique", "en": "skincare brand"}
@@ -69,8 +71,8 @@ def resolve(lang, brand):
         def rank(p):
             n = norm(p["title"]); n = redirects.get(n, n); n = normalized.get(n, n)
             return order.get(n, 99)
-        key = norm(brand).split()[-1]  # "vichy", "posay", "avene", ...
-        pages = [p for p in pages if norm(p["title"]) not in TOWNS and key in norm(p["title"])]
+        key = norm(brand).split()[-1]  # "vichy", "posay", "avene", "ordinary" ...
+        pages = [p for p in pages if norm(p["title"]) not in TOWNS and (key in norm(p["title"]) or "deciem" in norm(p["title"]))]
         if pages:
             return sorted(pages, key=rank)[0]["title"]
     s = get_json(api + urllib.parse.urlencode({"action": "query", "format": "json", "list": "search", "srlimit": 5,

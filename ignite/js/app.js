@@ -669,7 +669,7 @@
 
   /* ---------- render: TikTok live feeds ---------- */
   const TT = { "Vichy": "vichylaboratoires", "La Roche-Posay": "larocheposay", "CeraVe": "cerave", "Avène": "avene",
-               "Bioderma": "biodermafrance", "Eucerin": "eucerin", "Klorane": "klorane" };
+               "Bioderma": "biodermafrance", "Eucerin": "eucerin", "Klorane": "klorane", "The Ordinary": "theordinary" };
   let ttBrand = null;
   function renderTikTok(brand) {
     const chips = $("ttChips"), box = $("ttEmbed"); if (!chips || !box) return;
@@ -698,7 +698,7 @@
     const pd = DATA.competitor_posts.map(p => p.date).filter(Boolean).sort();
     const igRows = DATA.competitor_posts.filter(p => p.platform === "Instagram");
     const igStatus = DATA.status.instagram;
-    $("postsSource").textContent = pd.length ? `Source: public brand posts on ${DATA._meta.platforms.join(", ")}, ${longDate(pd[0])} – ${longDate(pd[pd.length - 1])}.${igRows.length && igStatus && igStatus.engine !== "cloud" ? ` Instagram: the latest ${igRows.length} public posts across the 7 brands (about 12 per brand), with likes as shown on ${dateFmt(String(igStatus.last_run).slice(0, 10))}; they update once Instagram is connected.` : ""} YouTube refreshes every hour. Times in Paris time.` : "";
+    $("postsSource").textContent = pd.length ? `Source: public brand posts on ${DATA._meta.platforms.join(", ")}, ${longDate(pd[0])} – ${longDate(pd[pd.length - 1])}.${igRows.length && igStatus && igStatus.engine !== "cloud" ? ` Instagram: the latest ${igRows.length} public posts across the ${new Set(igRows.map(p => p.brand)).size} brands (about 12 per brand), with likes as shown on ${dateFmt(String(igStatus.last_run).slice(0, 10))}; they update once Instagram is connected.` : ""} YouTube refreshes every hour. Times in Paris time.` : "";
     $("briefSource").textContent = `Worked out automatically from the live data each time the page loads (last data update ${relTime(DATA._meta.lastRun)}). Fixed rules, no AI: every number comes from the sources named on each trend.`;
     renderTikTok();
   }
