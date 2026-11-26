@@ -120,7 +120,7 @@ def main():
         w.writeheader()
         w.writerows(rows)
     new = sum(1 for r in rows if r["summary"].startswith("New YouTube upload"))
-    write_status(bool(found), len(rows), f"Refreshed {len(stats)} videos from {len(found)} brands" + (f"; channel not found: {', '.join(missing)}" if missing else ""))
+    write_status(bool(found), len(rows), f"Refreshed {len(stats)} videos from {len(found)} brands" + (f"; no YouTube channel tracked yet for {', '.join(missing)}" if missing else ""))
     print(f"Updated {len(stats)} YouTube posts, {len(rows)} rows total.")
 
 

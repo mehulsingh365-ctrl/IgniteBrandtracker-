@@ -68,7 +68,9 @@
       hashtags: DATA.hashtags.filter(matchMarket),
       listening: DATA.listening.filter(r => matchMarket(r) && matchCategory(r) && matchDate(r)),
       products: DATA.products.filter(matchCategory),
-      news: DATA.news.filter(matchDate)
+      news: (() => { const seen = new Set(); return DATA.news.filter(matchDate).filter(n => {
+        const k = `${n.brand}|${n.source}|${n.date}|${String(n.title).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").slice(0, 4).join(" ")}`;
+        if (seen.has(k)) return false; seen.add(k); return true; }); })()
     };
   }
 
@@ -207,7 +209,7 @@
           </div>
           <div class="card__hover">
             <div><b>${fmt(p.likes)}</b><span>Likes</span></div>
-            <div><b>${fmt(p.comments)}</b><span>Comments</span></div>
+            <div><b>${p.comments !== "" && p.comments != null ? fmt(p.comments) : "—"}</b><span>Comments</span></div>
             <div><b>${p.views ? fmt(p.views) : "—"}</b><span>Views</span></div>
           </div>`}
         </div>
@@ -332,7 +334,7 @@
     const mostActive = brands.filter(b => b !== FOCUS).sort((a, b) => (count[b] || 0) - (count[a] || 0))[0];
     const tiles = [
       { label: "Instagram followers", tip: "Vichy's followers on Instagram, from the public profile. TikTok followers are shown live in the TikTok section.", val: fmt(totalFol),
-        sub: `${ig ? `Checked ${dateFmt(ig.date)}` : "—"}${igPrev ? ` · ${delta(ig.followers, igPrev.followers)}` : ""}` },
+        sub: `${ig ? `Checked ${dateFmt(ig.date)}` : "—"}${igPrev && Number(ig.followers) < 100000 ? ` · ${delta(ig.followers, igPrev.followers)}` : ""}` },
       { label: "Posts published", tip: "Vichy posts in the selected period, across the platforms we track.", val: String(count[FOCUS] || 0),
         sub: mostActive ? `Most active competitor: ${esc(mostActive)} (${count[mostActive] || 0})` : "" },
       { label: "Average likes per post", tip: "Total likes divided by number of posts in the selected period.", val: fmt(avgLikes(FOCUS)),
@@ -485,7 +487,7 @@
     const few = n => n < 5 ? " · small sample" : "";
     $("whatsWorking").innerHTML = `
       <div><h4>Best format</h4><p>${esc(fmtBest.name)}<small>${pct(fmtBest.value, 2)} typical engagement · ${fmtBest.n} post${fmtBest.n > 1 ? "s" : ""}${few(fmtBest.n)}</small></p></div>
-      <div><h4>Most active competitor</h4><p>${esc(active[0])}<small>${active[1]} post${active[1] > 1 ? "s" : ""} in this period</small></p></div>
+      <div><h4>Most active competitor${scope.plat ? ` on ${esc(scope.plat)}` : ""}</h4><p>${esc(active[0])}<small>${active[1]} post${active[1] > 1 ? "s" : ""} in this period</small></p></div>
       <div><h4>Winning angle</h4><p>${angleBest ? esc(angleName[angleBest.name] || angleBest.name) : "Not enough posts yet"}<small>${angleBest ? `${pct(angleBest.value, 2)} typical engagement · ${angleBest.n} posts${few(angleBest.n)}` : "Needs at least 3 posts of one kind"}</small></p></div>`;
   }
 
@@ -551,7 +553,7 @@
     const rows = Object.entries(counts).map(([brand, c]) => ({ brand, v: (c / total) * 100, c })).sort((a, b) => b.v - a.v);
     $("pressChart").innerHTML = rows.length ? bars(rows, x => pct(x, 0)) : `<div class="empty">No articles in this period.</div>`;
     const leader = rows[0], mine = rows.find(r => r.brand === FOCUS);
-    $("newsSowhat").innerHTML = leader ? `<strong>${esc(leader.brand)}</strong> got the most press coverage: ${leader.c} of ${total} articles (${pct(leader.v, 0)}). ${mine ? `Vichy had ${mine.c} (${pct(mine.v, 0)}).` : "Vichy had none in this period."}` : "";
+    $("newsSowhat").innerHTML = leader ? `<strong>${esc(leader.brand)}</strong> got the most press coverage: ${leader.c} of ${total} articles (${pct(leader.v, 0)}). ${mine ? `Vichy had ${mine.c} (${pct(mine.v, 0)}).` : "We found no Vichy articles in our news sources for this period."}` : "";
     const brands = ["All", ...rows.map(r => r.brand)];
     if (!brands.includes(state.newsBrand)) state.newsBrand = "All";
     $("newsChips").innerHTML = brands.map(b => `<button data-newsbrand="${esc(b)}" aria-pressed="${b === state.newsBrand}">${b === "All" ? "All brands" : esc(b)}</button>`).join("");
@@ -562,7 +564,7 @@
         <span class="news__meta"><i class="dot" style="background:${color(n.brand)}"></i>${esc(n.brand)} · ${esc(n.source || "News")} · ${dateFmt(n.date)}${n.time ? ` ${esc(n.time)}` : ""}${n.language === "fr" ? " · FR" : ""}</span>
         <span class="news__title">${esc(n.title)}</span>
       </a>`).join("") : `<div class="empty">No articles for this brand in this period.</div>`;
-    $("newsSource").textContent = `Source: Google News search results in English and French. Headlines link to the original article. Collected automatically about every hour.`;
+    $("newsSource").textContent = `Source: Google News, Bing News and beauty trade press (Cosmetics Business, CosmeticsDesign-Europe, WWD, Premium Beauty News), in English and French. Headlines link to the original article. Collected automatically about every hour. An article counts for a brand when it names the brand.`;
   }
 
   /* ---------- render: data status ---------- */
@@ -621,7 +623,7 @@
       <table>
         <tr><td>Engagement rate</td><td><strong>${pct(p.engagement_rate, 2)}</strong></td></tr>
         <tr><td>Likes</td><td>${Number(p.likes).toLocaleString("en-GB")}</td></tr>
-        <tr><td>Comments</td><td>${Number(p.comments).toLocaleString("en-GB")}</td></tr>
+        <tr><td>Comments</td><td>${p.comments !== "" && p.comments != null ? Number(p.comments).toLocaleString("en-GB") : "Not collected"}</td></tr>
         <tr><td>Views</td><td>${p.views ? Number(p.views).toLocaleString("en-GB") : "Not public"}</td></tr>
         <tr><td>Account followers</td><td>${Number(p.followers).toLocaleString("en-GB")}</td></tr>
       </table>

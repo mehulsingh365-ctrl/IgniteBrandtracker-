@@ -97,7 +97,7 @@ window.PulseTrends = (function () {
       const leadCur = windowOf(news, 7, 0, now).filter(r => r.brand === lead[0]).length;
       const leadPrev = windowOf(news, 14, 7, now).filter(r => r.brand === lead[0]).length;
       out.push({ score: mine === 0 ? 85 : 60, tag: "Share of voice", window: "Last 30 days", level: mine === 0 ? "alert" : "",
-        title: mine === 0 ? `Vichy has no press coverage in 30 days; ${lead[0]} has ${lead[1]} articles` : `${lead[0]} leads press coverage; Vichy has ${Math.round(mine / n30.length * 100)}%`,
+        title: mine === 0 ? `No Vichy articles in our news sources for 30 days; ${lead[0]} has ${lead[1]}` : `${lead[0]} leads press coverage; Vichy has ${Math.round(mine / n30.length * 100)}%`,
         evidence: `${ranked.map(([b, k]) => `${b} ${k}`).join(" · ")}. ${lead[0]}: ${leadCur} articles this week vs ${leadPrev} the week before.`,
         action: mine === 0 ? "Give journalists a reason to write about Vichy: a product story, a dermatologist expert comment or a seasonal angle (winter skin, gifting)." : `Look at what ${lead[0]} is being covered for and decide whether Vichy has a matching story.`,
         source: "Google News" });

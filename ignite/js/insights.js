@@ -76,7 +76,7 @@ window.PulseInsights = (function () {
       const mainPlat = Object.entries(plats).sort((a, b) => b[1] - a[1])[0][0];
       const fmt = bestBy(posts.filter(p => p.brand !== focus && p.platform === mainPlat), "format", "engagement_rate")[0];
       const fmtName = n => /^reel|video|post$/i.test(n) ? n.toLowerCase() + "s" : n.toLowerCase();
-      sowhat.posts = `Most liked: <strong>${top.brand}</strong>, "${top.topic}" (${top.platform}, ${Number(top.likes).toLocaleString("en-GB")} likes).${fmt ? ` On ${mainPlat}, competitor <strong>${fmtName(fmt.name)}</strong> get the best engagement (${pct(fmt.value)}).` : ""}`;
+      sowhat.posts = `Most liked: <strong>${top.brand}</strong>, "${top.topic}" (${top.platform}, ${Number(top.likes).toLocaleString("en-GB")} likes).${fmt ? ` On ${mainPlat}, competitor <strong>${fmtName(fmt.name)}</strong> get the best engagement (${fmt.value.toFixed(2)}% typical).` : ""}`;
       const same = posts.filter(p => p.platform === mainPlat);
       const derm = same.filter(p => /dermatolog/i.test(p.topic + " " + p.summary));
       const nonDerm = same.filter(p => !/dermatolog/i.test(p.topic + " " + p.summary));
