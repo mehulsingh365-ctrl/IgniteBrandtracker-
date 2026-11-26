@@ -20,13 +20,17 @@ BRANDS = ["Vichy", "La Roche-Posay", "CeraVe", "Avène", "Bioderma", "Eucerin", 
 # Wikipedia pages to try for each brand, first match wins. The town pages are never used.
 PAGES = {
     "fr": {"Vichy": ["Vichy (cosmétiques)", "Laboratoires Vichy", "Vichy Laboratoires", "Vichy (marque)"],
-           "La Roche-Posay": ["La Roche-Posay (marque)", "La Roche-Posay (cosmétiques)", "Laboratoire dermatologique de La Roche-Posay"],
+           "La Roche-Posay": ["La Roche-Posay (marque)", "La Roche-Posay (cosmétiques)", "La Roche-Posay (entreprise)",
+                              "La Roche-Posay Laboratoire Dermatologique", "Laboratoire dermatologique de La Roche-Posay"],
            "Avène": ["Eau thermale Avène", "Avène (marque)", "Laboratoires dermatologiques Avène"],
-           "Bioderma": ["Bioderma"], "CeraVe": ["CeraVe"], "Eucerin": ["Eucerin"], "Klorane": ["Klorane"]},
+           "Bioderma": ["Bioderma"], "CeraVe": ["CeraVe"], "Eucerin": ["Eucerin"],
+           "Klorane": ["Klorane", "Klorane (marque)", "Laboratoires Klorane"]},
     "en": {"Vichy": ["Vichy Laboratoires", "Vichy (cosmetics)", "Vichy (brand)"],
-           "La Roche-Posay": ["La Roche-Posay (company)", "La Roche-Posay (brand)", "La Roche-Posay (cosmetics)"],
+           "La Roche-Posay": ["La Roche-Posay (company)", "La Roche-Posay (brand)", "La Roche-Posay (cosmetics)",
+                              "La Roche-Posay (skincare)", "La Roche-Posay Laboratoire Dermatologique"],
            "Avène": ["Eau Thermale Avène", "Avène (brand)"],
-           "Bioderma": ["Bioderma"], "CeraVe": ["CeraVe"], "Eucerin": ["Eucerin"], "Klorane": ["Klorane"]},
+           "Bioderma": ["Bioderma"], "CeraVe": ["CeraVe"], "Eucerin": ["Eucerin"],
+           "Klorane": ["Klorane", "Klorane (brand)"]},
 }
 TOWNS = {"vichy", "la roche posay", "avene"}
 SEARCH_HINT = {"fr": "marque cosmétique", "en": "skincare brand"}
@@ -74,7 +78,7 @@ def resolve(lang, brand):
     key = norm(brand)
     for hit in (s or {}).get("query", {}).get("search", []):
         t = norm(hit["title"])
-        if key in t and t not in TOWNS:
+        if key in t and t not in TOWNS and not any(w in t for w in ("thermes", "station", "gare", "canton", "eglise", "chateau", "commune")):
             return hit["title"]
     return None
 

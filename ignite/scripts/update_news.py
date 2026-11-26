@@ -186,8 +186,10 @@ def main():
                          "language": lang, "title": it["title"], "source": it["source"], "link": it["link"]})
         added += 1
 
+    google_added = added
     recent = datetime.now(PARIS) - timedelta(days=30)
     extra_ok, extra_tried = 0, 0
+    bing_ok = trade_ok = 0
     # Bing News: one search per brand in English and French, matching the summary too
     for brand, qs in queries.items():
         if brand.startswith("_"):
@@ -196,7 +198,7 @@ def main():
             extra_tried += 1
             try:
                 items = parse(get(BING.format(q=urllib.parse.quote(qs[0]), lang=lang)))
-                extra_ok += 1
+                extra_ok += 1; bing_ok += 1
             except Exception as e:
                 print(f"! Bing {brand} {lang}: {type(e).__name__}"); continue
             for it in items:
@@ -207,7 +209,7 @@ def main():
         extra_tried += 1
         try:
             items = parse(get(url), name)
-            extra_ok += 1
+            extra_ok += 1; trade_ok += 1
         except Exception as e:
             print(f"! {name}: {type(e).__name__}"); continue
         for it in items:
@@ -225,7 +227,8 @@ def main():
         w.writeheader()
         w.writerows(rows)
     ok = errors < tried or extra_ok > 0  # fails only if no source at all answered
-    msg = f"{added} new articles from Google News, Bing and beauty trade press" + (f"; {errors} of {tried} Google searches failed" if errors else "")
+    msg = (f"{added} new articles ({google_added} Google News, {added - google_added} Bing and trade press). "
+           f"Sources answering: Google {tried - errors}/{tried}, Bing {bing_ok}/{len([b for b in queries if not b.startswith('_')]) * 2}, trade press {trade_ok}/{len(TRADE_FEEDS)}")
     if not ok:
         msg = "No news source answered this time; showing articles saved earlier"
     write_status(ok, len(rows), msg)
