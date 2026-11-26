@@ -8,7 +8,7 @@
   const $ = id => document.getElementById(id);
   const state = { market: "All", category: "All", platform: "All", sentiment: "All", view: null, creator: "All",
     period: "30", from: "", to: "", sort: "newest", showAll: false, newsBrand: "All" };
-  const PLATFORMS = ["All", "Instagram", "TikTok", "YouTube", "LinkedIn"];
+  const PLATFORMS = ["All", "Instagram", "YouTube"];  // TikTok has its own live section below
   const CREATORS = ["All", "Dermatologist", "Creator", "Brand"];
   const creatorType = p => p.creator_type || (/dermatolog|\bderms?\b|doctor|\bdr\.?\s/i.test(p.topic + " " + p.summary) ? "Dermatologist" : /@[\w.]+|creator|influencer|testimonial|her daughter|real[- ]people/i.test(p.topic + " " + p.summary) ? "Creator" : "Brand");
   try { state.view = localStorage.getItem("bp_view") || null; } catch (e) {}
