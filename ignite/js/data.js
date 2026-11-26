@@ -88,7 +88,10 @@
     ]);
     const data = { kpis: [], products: [] };
     TABS.forEach((t, i) => { data[t] = tabs[i].rows; });
-    data.accounts = data.accounts.filter(a => a.platform !== "TikTok");  // TikTok counts are shown live by TikTok
+    data.accounts = data.accounts.filter(a => a.platform !== "TikTok");
+    // Google News feed links ("/rss/articles/") are meant for feed readers and can show a
+    // "We're sorry" page in a browser. The normal web link opens the article itself.
+    data.news.forEach(n => { if (n.link) n.link = n.link.replace("news.google.com/rss/articles/", "news.google.com/articles/"); });  // TikTok counts are shown live by TikTok
     data.competitor_posts = posts.flatMap(r => r.rows);
     data.status = {};
     SOURCES.forEach((s, i) => { if (status[i]) data.status[s] = status[i]; });
