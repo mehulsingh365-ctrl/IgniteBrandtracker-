@@ -14,6 +14,7 @@ KEY = os.environ.get("YOUTUBE_API_KEY")
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CSV_PATH = os.path.join(ROOT, "data", "posts", "youtube.csv")
 STATUS_PATH = os.path.join(ROOT, "data", "status", "youtube.json")
+ACCOUNTS_PATH = os.path.join(ROOT, "data", "accounts.csv")
 FIELDS = ["date", "time", "brand", "platform", "market", "category", "format", "topic", "product",
           "likes", "comments", "views", "followers", "engagement_rate", "summary", "link"]
 
@@ -49,14 +50,35 @@ def main():
     # 1) New uploads from the last 7 days
     channels = json.load(open(os.path.join(ROOT, "scripts", "channels.json"), encoding="utf-8"))
     since = datetime.now(timezone.utc) - timedelta(days=7)
-    for brand, handle in channels.items():
+    today = datetime.now(timezone(timedelta(hours=1))).date().isoformat()
+    with open(ACCOUNTS_PATH, newline="", encoding="utf-8") as f:
+        areader = csv.DictReader(f); afields = areader.fieldnames; accounts = list(areader)
+    found, missing = [], []
+    for brand, handles in channels.items():
         if brand.startswith("_"):
             continue
-        ch = call("channels", part="contentDetails,statistics", forHandle=handle).get("items", [])
-        if not ch:
-            print(f"! channel not found: {brand} {handle}")
+        # A list of handles: try each one and keep the channel with the most subscribers
+        best, best_handle = None, None
+        for handle in (handles if isinstance(handles, list) else [handles]):
+            try:
+                items = call("channels", part="contentDetails,statistics,snippet", forHandle=handle).get("items", [])
+            except Exception as e:
+                print(f"! {brand} {handle}: {type(e).__name__}"); items = []
+            if items and (best is None or int(items[0]["statistics"].get("subscriberCount", 0) or 0) > int(best["statistics"].get("subscriberCount", 0) or 0)):
+                best, best_handle = items[0], handle
+        if not best:
+            print(f"! channel not found: {brand}")
+            missing.append(brand)
             continue
+        ch = [best]
+        found.append(brand)
         subs = ch[0]["statistics"].get("subscriberCount", "")
+        if subs and not ch[0]["statistics"].get("hiddenSubscriberCount"):
+            h = ch[0].get("snippet", {}).get("customUrl") or best_handle
+            h = h if h.startswith("@") else "@" + h
+            accounts = [a for a in accounts if not (a["date"] == today and a["brand"] == brand and a["platform"] == "YouTube")]
+            accounts.append({"date": today, "brand": brand, "platform": "YouTube", "handle": h,
+                             "followers": subs, "url": f"https://www.youtube.com/{h}"})
         uploads = ch[0]["contentDetails"]["relatedPlaylists"]["uploads"]
         items = call("playlistItems", part="snippet", playlistId=uploads, maxResults=10).get("items", [])
         for it in items:
@@ -90,12 +112,15 @@ def main():
             r["comments"] = s.get("commentCount", r["comments"])
             r["engagement_rate"] = ""  # recalculated by the website
 
+    with open(ACCOUNTS_PATH, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=afields)
+        w.writeheader(); w.writerows(accounts)
     with open(CSV_PATH, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
         w.writeheader()
         w.writerows(rows)
     new = sum(1 for r in rows if r["summary"].startswith("New YouTube upload"))
-    write_status(True, len(rows), f"Refreshed {len(stats)} videos")
+    write_status(bool(found), len(rows), f"Refreshed {len(stats)} videos from {len(found)} brands" + (f"; channel not found: {', '.join(missing)}" if missing else ""))
     print(f"Updated {len(stats)} YouTube posts, {len(rows)} rows total.")
 
 

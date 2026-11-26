@@ -1,6 +1,6 @@
 """
-Collects recent press articles about Vichy and its competitors from Google News
-RSS feeds (free, public, no key). Runs on GitHub Actions about every hour.
+Collects recent press articles about Vichy and its competitors from Google News,
+Bing News and beauty trade press RSS feeds (free, public, no key). Runs on GitHub Actions about every hour.
 
 Writes data/news.csv (last 45 days, de-duplicated) and data/status/news.json.
 """
@@ -40,14 +40,34 @@ def fetch(query, edition):
     raise last
 
 
-def parse(xml_bytes):
+def text_of(el, *names):
+    """First child whose tag ends with one of names (handles namespaced tags like News:Source)."""
+    for child in el:
+        tag = child.tag.split("}")[-1].lower()
+        if tag in names:
+            return (child.text or "").strip()
+    return ""
+
+
+def clean_link(link):
+    # Bing wraps article links in a click tracker; keep the real address
+    if "bing.com/news/apiclick" in link:
+        q = urllib.parse.parse_qs(urllib.parse.urlparse(link).query)
+        return q.get("url", [link])[0]
+    return link
+
+
+def parse(xml_bytes, default_source=""):
     items = []
     root = ET.fromstring(xml_bytes)
+    channel_title = (root.findtext("channel/title") or default_source).strip()
     for it in root.iter("item"):
-        title = (it.findtext("title") or "").strip()
-        link = (it.findtext("link") or "").strip()
+        title = re.sub(r"\s+", " ", (it.findtext("title") or "")).strip()
+        link = clean_link((it.findtext("link") or "").strip())
         src_el = it.find("source")
-        source = (src_el.text or "").strip() if src_el is not None else ""
+        source = (src_el.text or "").strip() if src_el is not None else (text_of(it, "source") or default_source or channel_title)
+        desc = re.sub(r"<[^>]+>", " ", it.findtext("description") or "")
+        desc = re.sub(r"\s+", " ", desc).strip()
         # Google appends " - Source" to titles; remove it
         if source and title.endswith(" - " + source):
             title = title[: -len(" - " + source)]
@@ -55,7 +75,7 @@ def parse(xml_bytes):
             dt = parsedate_to_datetime(it.findtext("pubDate")).astimezone(PARIS)
         except Exception:
             continue
-        items.append({"dt": dt, "title": title, "source": source, "link": link})
+        items.append({"dt": dt, "title": title, "source": source, "link": link, "desc": desc})
     return items
 
 
@@ -83,13 +103,38 @@ SKINCARE_WORDS = ["skin", "skincare", "beauty", "beaute", "peau", "soin", "soins
 NEEDS_CONTEXT = {"Vichy", "La Roche-Posay"}
 
 
-def relevant(brand, title):
-    t = norm(title)
+def relevant(brand, title, desc=""):
+    """The brand must be named in the headline, or in the summary for trusted beauty sources."""
+    t = norm(title + " " + desc)
     if not any(w in t for w in BRAND_WORDS.get(brand, [norm(brand)])):
         return False
     if brand in NEEDS_CONTEXT:
         return any(w in t for w in SKINCARE_WORDS)
     return True
+
+
+def looks_french(text):
+    t = " " + norm(text) + " "
+    return sum(w in t for w in (" le ", " la ", " les ", " des ", " une ", " pour ", " avec ", " et ", " du ", " sur ")) >= 2
+
+
+# Extra free sources: Bing News search (has article summaries) and beauty trade press feeds
+BING = "https://www.bing.com/news/search?q={q}&format=rss&setlang={lang}"
+TRADE_FEEDS = [
+    ("Cosmetics Business", "https://cosmeticsbusiness.com/rss"),
+    ("CosmeticsDesign-Europe", "https://www.cosmeticsdesign-europe.com/feed/view/213224"),
+    ("WWD Beauty", "https://wwd.com/beauty-industry-news/feed/"),
+    ("Premium Beauty News", "https://www.premiumbeautynews.com/spip.php?page=backend"),
+]
+
+
+def get(url):
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        "Accept-Language": "en-GB,en;q=0.9,fr;q=0.8"})
+    time.sleep(2)
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return r.read()
 
 
 def write_status(ok, items, message):
@@ -105,8 +150,6 @@ def main():
     if os.path.exists(OUT):
         with open(OUT, newline="", encoding="utf-8") as f:
             existing = list(csv.DictReader(f))
-    # re-check what is already saved, so older town news is cleared too
-    existing = [r for r in existing if relevant(r["brand"], r["title"])]
     seen = {norm(r["title"]) + "|" + r["brand"] for r in existing}
     added, errors, tried = 0, 0, 0
     for brand, qs in queries.items():
@@ -133,16 +176,58 @@ def main():
                                      "brand": brand, "language": lang, "title": it["title"],
                                      "source": it["source"], "link": it["link"]})
                     added += 1
+    def add(brand, it, lang):
+        nonlocal added
+        key = norm(it["title"]) + "|" + brand
+        if key in seen or not it["title"]:
+            return
+        seen.add(key)
+        existing.append({"date": it["dt"].date().isoformat(), "time": it["dt"].strftime("%H:%M"), "brand": brand,
+                         "language": lang, "title": it["title"], "source": it["source"], "link": it["link"]})
+        added += 1
+
+    recent = datetime.now(PARIS) - timedelta(days=30)
+    extra_ok, extra_tried = 0, 0
+    # Bing News: one search per brand in English and French, matching the summary too
+    for brand, qs in queries.items():
+        if brand.startswith("_"):
+            continue
+        for lang in ("en", "fr"):
+            extra_tried += 1
+            try:
+                items = parse(get(BING.format(q=urllib.parse.quote(qs[0]), lang=lang)))
+                extra_ok += 1
+            except Exception as e:
+                print(f"! Bing {brand} {lang}: {type(e).__name__}"); continue
+            for it in items:
+                if it["dt"] >= recent and relevant(brand, it["title"], it["desc"]):
+                    add(brand, it, "fr" if looks_french(it["title"] + " " + it["desc"]) else "en")
+    # Beauty trade press: every brand named in the headline or summary
+    for name, url in TRADE_FEEDS:
+        extra_tried += 1
+        try:
+            items = parse(get(url), name)
+            extra_ok += 1
+        except Exception as e:
+            print(f"! {name}: {type(e).__name__}"); continue
+        for it in items:
+            if it["dt"] < recent:
+                continue
+            for brand in queries:
+                if not brand.startswith("_") and relevant(brand, it["title"], it["desc"]):
+                    add(brand, it, "fr" if looks_french(it["title"] + " " + it["desc"]) else "en")
+    print(f"Extra sources: {extra_ok} of {extra_tried} answered")
+
     cutoff = (datetime.now(PARIS) - timedelta(days=KEEP_DAYS)).date().isoformat()
     rows = sorted([r for r in existing if r["date"] >= cutoff], key=lambda r: (r["date"], r["time"]), reverse=True)
     with open(OUT, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=FIELDS)
         w.writeheader()
         w.writerows(rows)
-    ok = errors < tried  # fails only if no search at all got through
-    msg = f"{added} new articles" + (f", {errors} of {tried} searches failed" if errors else "")
+    ok = errors < tried or extra_ok > 0  # fails only if no source at all answered
+    msg = f"{added} new articles from Google News, Bing and beauty trade press" + (f"; {errors} of {tried} Google searches failed" if errors else "")
     if not ok:
-        msg = f"Google News refused all {tried} searches; showing articles saved earlier"
+        msg = "No news source answered this time; showing articles saved earlier"
     write_status(ok, len(rows), msg)
     print(f"Added {added}, kept {len(rows)}, errors {errors}")
 

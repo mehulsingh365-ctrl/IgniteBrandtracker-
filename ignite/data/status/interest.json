@@ -1,0 +1,9 @@
+{
+ "source": "Brand interest (Wikipedia)",
+ "engine": "cloud",
+ "schedule": "Once a day",
+ "last_run": "",
+ "ok": null,
+ "items": 0,
+ "message": "Starts with the first daily run"
+}

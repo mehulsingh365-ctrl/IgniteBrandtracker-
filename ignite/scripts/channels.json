@@ -1,6 +1,10 @@
 {
-  "_note": "YouTube handles per brand. Add or fix handles here; the workflow checks each channel's latest uploads.",
+  "_note": "YouTube channels per brand. A list means: try each handle and keep the one with the most subscribers.",
   "Vichy": "@VichyLaboratoires",
   "La Roche-Posay": "@LaRochePosay",
-  "CeraVe": "@CeraVe"
+  "CeraVe": "@CeraVe",
+  "Avène": ["@EauThermaleAvene", "@AveneFrance", "@Avene", "@aveneusa", "@AveneUK"],
+  "Bioderma": ["@BIODERMA", "@BiodermaFrance", "@biodermaofficial", "@BiodermaUSA"],
+  "Eucerin": ["@Eucerin", "@EucerinFrance", "@EucerinUS", "@EucerinUK"],
+  "Klorane": ["@Klorane", "@KloraneFrance", "@KloraneUSA", "@kloraneofficial"]
 }

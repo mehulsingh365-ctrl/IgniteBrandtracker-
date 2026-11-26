@@ -361,6 +361,9 @@
     const median = others.length ? [...others].sort((a, b) => a.v - b.v)[Math.floor(others.length / 2)].v : null;
     $("erSowhat").innerHTML = igEr.length ? `<strong>${esc(igEr[0].brand)}</strong> gets the strongest reaction per follower (${pct(igEr[0].v, 2)}).${vEr && median != null ? ` Vichy is at ${pct(vEr.v, 2)}, ${vEr.v >= median ? "above" : "below"} the typical competitor (${pct(median, 2)}).` : ""}` : "";
 
+    // Brand interest (Wikipedia page views, last 30 days vs the 30 before)
+    renderInterest();
+
     // Audience table
     const plats = [...new Set(DATA.accounts.map(a => a.platform))];
     const totalF = b => plats.reduce((s2, pl) => s2 + (fol(b, pl)?.followers || 0), 0);
@@ -370,7 +373,23 @@
     }</tbody></table>` : `<div class="empty">No follower data yet.</div>`;
 
     const checked = plats.map(pl => { const ds = DATA.accounts.filter(a => a.platform === pl).map(a => a.date).sort(); return `${pl} ${dateFmt(ds[ds.length - 1])}`; }).join(", ");
-    $("healthSource").textContent = `Source: public posts and profiles on ${DATA._meta.platforms.join(", ")}. Likes are counted as shown on each post. Followers checked: ${checked}.`;
+    $("healthSource").textContent = `Source: public posts and profiles on ${DATA._meta.platforms.join(", ")}; brand interest from Wikimedia page view statistics. Likes are counted as shown on each post. Followers and subscribers checked: ${checked}.`;
+  }
+
+  function renderInterest() {
+    const el = $("interestChart"); if (!el) return;
+    const rows = DATA.interest || [];
+    if (!rows.length) { el.innerHTML = `<div class="empty">Starts with the first daily update.</div>`; $("interestSowhat").innerHTML = ""; return; }
+    const last = rows.map(r => r.date).sort().pop();
+    const day = d => new Date(d + "T00:00:00").getTime();
+    const sum = (b, from, to) => rows.filter(r => r.brand === b && day(r.date) > day(last) - from * 864e5 && day(r.date) <= day(last) - to * 864e5).reduce((a, r) => a + Number(r.views || 0), 0);
+    const brands = [...new Set(rows.map(r => r.brand))];
+    const data = brands.map(b => ({ brand: b, v: sum(b, 30, 0), prev: sum(b, 60, 30) })).sort((a, b) => b.v - a.v);
+    el.innerHTML = bars(data, x => fmt(x));
+    const ch = x => x.prev ? Math.round((x.v / x.prev - 1) * 100) : null;
+    const mover = [...data].filter(x => ch(x) !== null && x.v >= 300).sort((a, b) => Math.abs(ch(b)) - Math.abs(ch(a)))[0];
+    const me = data.find(x => x.brand === FOCUS);
+    $("interestSowhat").innerHTML = `<strong>${esc(data[0].brand)}</strong> is looked up most (${fmt(data[0].v)} page views in 30 days).${me ? ` Vichy: ${fmt(me.v)}${ch(me) !== null ? ` (${ch(me) >= 0 ? "+" : ""}${ch(me)}% vs the 30 days before)` : ""}.` : ""}${mover && mover.brand !== FOCUS ? ` Biggest change: ${esc(mover.brand)} ${ch(mover) >= 0 ? "+" : ""}${ch(mover)}%.` : ""} <span class="muted">Data up to ${dateFmt(last)}.</span>`;
   }
 
   function bars(rows, label) {
@@ -461,10 +480,29 @@
     const active = Object.entries(byBrand).sort((a, b) => b[1] - a[1])[0] || ["—", 0];
     const derm = comp.filter(p => /dermatolog/i.test(p.topic + " " + p.summary));
     const dermEr = derm.length ? derm.reduce((s, p) => s + p.engagement_rate, 0) / derm.length : 0;
+    renderThemes(scope.posts);
     $("whatsWorking").innerHTML = `
       <div><h4>Best format</h4><p>${esc(fmtBest.name)}<small>${pct(fmtBest.value, 2)} avg engagement · ${fmtBest.n} post${fmtBest.n > 1 ? "s" : ""}</small></p></div>
       <div><h4>Most active competitor</h4><p>${esc(active[0])}<small>${active[1]} post${active[1] > 1 ? "s" : ""} in this period</small></p></div>
       <div><h4>Winning angle</h4><p>${derm.length ? "Dermatologist on camera" : "Teaching, not selling"}<small>${derm.length ? `${pct(dermEr, 2)} avg engagement · ${derm.length} post${derm.length > 1 ? "s" : ""}` : "From the best posts in this period"}</small></p></div>`;
+  }
+
+  /* ---------- themes: what brands talk about, and what gets likes ---------- */
+  function renderThemes(list) {
+    const el = $("themeTable"); if (!el) return;
+    if (!window.PulseTrends) { el.innerHTML = ""; return; }
+    const median = v => { const s = [...v].sort((a, b) => a - b), m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+    const rows = PulseTrends.THEMES.filter(t => t.name !== "Product launches").map(t => {
+      const ps = list.filter(p => PulseTrends.themesOf(`${p.topic} ${p.summary} ${p.product}`).includes(t));
+      const liked = ps.filter(p => p.likes !== "" && p.likes != null).map(p => Number(p.likes));
+      const brands = {}; ps.forEach(p => { brands[p.brand] = (brands[p.brand] || 0) + 1; });
+      return { t, n: ps.length, med: liked.length ? median(liked) : 0, top: Object.entries(brands).sort((a, b) => b[1] - a[1]).slice(0, 2), mine: ps.filter(p => p.brand === FOCUS).length };
+    }).filter(r => r.n >= 2).sort((a, b) => b.med - a.med);
+    el.innerHTML = rows.length ? `<table class="atable"><thead><tr><th>Theme</th><th>Posts</th><th>Typical likes</th><th>Who posts it most</th><th>Vichy posts</th></tr></thead><tbody>${
+      rows.map(r => `<tr><td>${esc(r.t.name)}</td><td>${r.n}</td><td>${fmt(r.med)}</td><td>${r.top.map(([b, k]) => `${esc(b)} (${k})`).join(", ")}</td><td>${r.mine}</td></tr>`).join("")}</tbody></table>`
+      : `<div class="empty">Not enough posts in this period to compare themes. Try a longer period.</div>`;
+    const best = rows[0], gap = rows.find(r => r.mine === 0 && r.n >= 3);
+    $("themeSowhat").innerHTML = best ? `<strong>${esc(best.t.name)}</strong> gets the most likes per post (${fmt(best.med)} typical).${gap ? ` Vichy has no posts on <strong>${esc(gap.t.name.toLowerCase())}</strong>, which competitors used ${gap.n} times. ${esc(gap.t.action)}` : ""}` : "";
   }
 
   /* ---------- when brands post (day x time heatmap) ---------- */
@@ -526,10 +564,10 @@
   }
 
   /* ---------- render: data status ---------- */
-  const SOURCE_ORDER = ["youtube", "news", "instagram", "tiktok"];
+  const SOURCE_ORDER = ["youtube", "news", "interest", "instagram", "tiktok"];
   function renderStatus() {
     const el = $("statusTable"); if (!el) return;
-    const lateAfter = st => (/hour/.test(st.schedule) ? 6 : /Twice/.test(st.schedule) ? 30 : 50) * 3600000;
+    const lateAfter = st => (/hour/.test(st.schedule) ? 6 : /Twice/.test(st.schedule) ? 30 : 50) * 3600000;  // "Once a day" → late after 50 h
     const ENGINE = { cloud: "Automatic · runs on GitHub, no computer needed", manual: "Updated by hand", embed: "Shown live by TikTok on this page" };
     const rows = SOURCE_ORDER.map(k => DATA.status[k]).filter(Boolean).map(st => {
       const age = st.last_run ? Date.now() - new Date(st.last_run).getTime() : null;
@@ -549,7 +587,7 @@
   /* ---------- render: calendar ---------- */
   function renderCalendar() {
     const today = new Date(); today.setHours(0, 0, 0, 0);
-    const items = DATA.calendar.filter(matchMarket).sort((a, b) => String(a.date).localeCompare(b.date));
+    const items = DATA.calendar.filter(matchMarket).sort((a, b) => String(a.date).localeCompare(b.date)).slice(0, 10);
     $("timeline").innerHTML = items.length ? items.map(c => {
       const d = new Date(c.date + "T00:00:00");
       const days = Math.round((d - today) / 864e5);

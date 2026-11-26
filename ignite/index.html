@@ -161,6 +161,11 @@
         </div>
       </div>
       <div class="mt">
+        <h3 class="block-title">Themes that get attention <button class="info" data-tip="Topics found in each post's title and caption (sun protection, acne, gifting, science…). Typical likes is the middle value, so one viral post can't skew it.">i</button></h3>
+        <div id="themeTable"></div>
+        <p class="sowhat sowhat--inline" id="themeSowhat"></p>
+      </div>
+      <div class="mt">
         <h3 class="block-title">When competitors post <button class="info" data-tip="Number of posts by day and time of day (Paris time) in the selected period. Darker = more posts. The figure under each count is the average engagement.">i</button></h3>
         <div id="timeHeatmap"></div>
         <p class="sowhat sowhat--inline" id="timeSowhat"></p>
@@ -206,7 +211,12 @@
         </div>
       </div>
       <div class="mt">
-        <h3 class="block-title">Audience by platform <button class="info" data-tip="Followers on each brand's main account, as shown on the public profile on the date checked.">i</button></h3>
+        <h3 class="block-title">Brand interest <button class="info" data-tip="How many times people opened each brand's Wikipedia page (French and English) in the last 30 days, from Wikimedia's public statistics. A free sign of how much people look a brand up. Updated daily.">i</button></h3>
+        <div id="interestChart" class="bars"></div>
+        <p class="sowhat" id="interestSowhat"></p>
+      </div>
+      <div class="mt">
+        <h3 class="block-title">Audience by platform <button class="info" data-tip="Followers (Instagram) and subscribers (YouTube) on each brand's main account, as shown on the public profile on the date checked. YouTube is updated automatically every hour.">i</button></h3>
         <div id="audienceTable"></div>
       </div>
       <p class="source" id="healthSource"></p>
@@ -277,7 +287,7 @@
         </div>
       </div>
       <div id="statusTable"></div>
-      <p class="source">YouTube and News update automatically on GitHub, with no computer needed. TikTok is shown live by TikTok. This page checks for new data every 10 minutes.</p>
+      <p class="source">YouTube, News and Brand interest update automatically on GitHub, with no computer needed. TikTok is shown live by TikTok. This page checks for new data every 10 minutes.</p>
     </section>
   </main>
 

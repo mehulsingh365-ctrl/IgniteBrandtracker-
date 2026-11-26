@@ -177,6 +177,49 @@ window.PulseTrends = (function () {
         action: `Look at ${grow[0].b}'s recent posts below for what is pulling new followers in.`, source: "Profiles" });
     }
 
+    // 9. Brand interest: who people are looking up more (Wikipedia page views)
+    const wi = DATA.interest || [];
+    if (wi.length) {
+      const lastDay = wi.map(r => r.date).sort().pop();
+      const end = new Date(lastDay + "T12:00:00").getTime();
+      const sumW = (b, from, to) => wi.filter(r => r.brand === b).filter(r => { const t = new Date(r.date + "T12:00:00").getTime(); return t > end - from * DAY && t <= end - to * DAY; }).reduce((a, r) => a + n(r.views), 0);
+      const rows = [...new Set(wi.map(r => r.brand))].map(b => ({ b, cur: sumW(b, 7, 0), prev: sumW(b, 14, 7) }))
+        .filter(x => x.prev >= 100).map(x => ({ ...x, ch: pctChange(x.cur, x.prev) }));
+      const mover = [...rows].sort((a, b) => Math.abs(b.ch) - Math.abs(a.ch))[0];
+      const me = rows.find(x => x.b === FOCUS);
+      if (mover && Math.abs(mover.ch) >= 15) {
+        out.push({ score: 62 + Math.min(Math.abs(mover.ch), 60) / 3, tag: "Brand interest", window: "Last 7 days",
+          title: `People are looking up ${mover.b} ${mover.ch > 0 ? "more" : "less"} (${mover.ch > 0 ? "+" : ""}${mover.ch}%)`,
+          evidence: `${fmt(mover.cur)} Wikipedia page views this week vs ${fmt(mover.prev)} the week before.${me && me !== mover ? ` Vichy: ${me.ch >= 0 ? "+" : ""}${me.ch}%.` : ""} A jump usually follows a campaign, a launch or press coverage.`,
+          action: mover.b === FOCUS ? (mover.ch > 0 ? "Interest in Vichy is up: make sure this week's posts and product pages catch it." : "Interest in Vichy is down: a visible campaign moment or press story would help.") : `Check ${mover.b}'s posts and press from this week (above and in the news) to see what caused it.`,
+          source: "Wikipedia page views" });
+      }
+    }
+
+    // 10. Records from the weekly history (needs at least 4 weeks saved)
+    const hist = DATA.history || [];
+    const weeks = [...new Set(hist.map(r => r.week))].sort();
+    if (weeks.length >= 5) {
+      const lastFull = weeks[weeks.length - 2];   // the current week is still running
+      const metrics = [["news", "press articles"], ["wiki_views", "Wikipedia page views"], ["likes", "likes on its posts"]];
+      const records = [];
+      metrics.forEach(([key, label]) => {
+        [...new Set(hist.map(r => r.brand))].forEach(b => {
+          const series = weeks.slice(0, -1).map(w => hist.find(r => r.week === w && r.brand === b)).filter(r => r && r[key] !== "" && r[key] != null);
+          if (series.length < 4) return;
+          const v = n(series[series.length - 1][key]);
+          const before = series.slice(0, -1).map(r => n(r[key]));
+          if (series[series.length - 1].week === lastFull && v > 0 && v > Math.max(...before)) records.push({ b, key, label, v, weeks: series.length });
+        });
+      });
+      const rec = records.find(r => r.b === FOCUS) || records.sort((a, b) => b.weeks - a.weeks)[0];
+      if (rec) out.push({ score: rec.b === FOCUS ? 80 : 56, tag: "Record", window: `Week of ${lastFull}`,
+        title: `${rec.b}: most ${rec.label} in ${rec.weeks} weeks`,
+        evidence: `${fmt(rec.v)} ${rec.label} last week, the highest of the ${rec.weeks} weeks Ignite has saved.`,
+        action: rec.b === FOCUS ? "Find out what drove it and repeat it while attention is high." : `Look at ${rec.b}'s activity last week: something is working for them.`,
+        source: "Ignite weekly history" });
+    }
+
     return out.sort((a, b) => b.score - a.score);
   }
 

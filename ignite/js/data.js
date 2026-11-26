@@ -72,26 +72,72 @@
   //   posts/<platform>.csv  ← Instagram/TikTok (browser run), YouTube (cloud, every 2h)
   //   news.csv              ← Google News (cloud, every 2h)
   //   status/<source>.json  ← when each source last updated, and whether it worked
-  const TABS = ["accounts", "insights", "calendar", "keywords", "hashtags", "listening", "news"];
+  const TABS = ["accounts", "insights", "calendar", "keywords", "hashtags", "listening", "news", "interest"];
   const PLATFORMS = ["instagram", "youtube"];  // TikTok is shown as live TikTok feeds instead
-  const SOURCES = ["youtube", "news", "instagram", "tiktok"];
+  const SOURCES = ["youtube", "news", "instagram", "tiktok", "interest"];
 
   async function loadJSON(url) {
     try { return JSON.parse(await fetchText(url)); } catch (e) { return null; }
   }
 
+  /* Marketing calendar: the yearly moments are worked out for this year and next, so the
+     calendar never runs empty. Lines in data/calendar.csv are added on top (and win on the same day). */
+  function buildCalendar(extra) {
+    const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const easter = y => { const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25),
+      g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7,
+      m = Math.floor((a + 11 * h + 22 * l) / 451), mo = Math.floor((h + l - 7 * m + 114) / 31), da = ((h + l - 7 * m + 114) % 31) + 1; return new Date(y, mo - 1, da); };
+    const nth = (y, m, wd, n) => { const d = new Date(y, m, 1); d.setDate(1 + ((wd - d.getDay() + 7) % 7) + 7 * (n - 1)); return d; };
+    const last = (y, m, wd) => { const d = new Date(y, m + 1, 0); d.setDate(d.getDate() - ((d.getDay() - wd + 7) % 7)); return d; };
+    const add = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+    const out = [];
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    [today.getFullYear(), today.getFullYear() + 1].forEach(y => {
+      const pent = add(easter(y), 49);
+      let mfr = last(y, 4, 0); if (iso(mfr) === iso(pent)) mfr = add(mfr, 7);
+      const thanks = nth(y, 10, 4, 4);
+      [
+        [new Date(y, 0, 1), "New year", "Europe", "Skin reset and winter-barrier content usually rises in January."],
+        [nth(y, 0, 3, 2), "Winter sales start (soldes d'hiver)", "France", "Pharmacies and retailers discount; watch which competitors join in and how hard."],
+        [new Date(y, 1, 14), "Valentine's Day", "Europe", "Gifting and self-care content: duo sets and 'treat yourself' angles."],
+        [new Date(y, 2, 8), "International Women's Day", "Global", "Purpose-led content: women in science and dermatology."],
+        [add(easter(y), -21), "Mother's Day (UK)", "UK", "UK gifting peak for skincare sets."],
+        [mfr, "Mother's Day (France)", "France", "French gifting peak: skincare sets and pharmacy promotions."],
+        [new Date(y, 5, 1), "Sun-care season starts", "Europe", "SPF content peaks from June to August: daily protection, holidays and after-sun."],
+        [nth(y, 5, 0, 3), "Father's Day (France)", "France", "Men's skincare and shaving content."],
+        [last(y, 5, 3), "Summer sales start (soldes d'été)", "France", "Promotions across pharmacy and beauty retail."],
+        [new Date(y, 8, 1), "Back to school (la rentrée)", "France", "Post-summer skin repair and new-routine content."],
+        [new Date(y, 9, 1), "Pink October (Octobre rose)", "Europe", "Breast cancer awareness: brands run donation and support campaigns."],
+        [new Date(y, 10, 11), "Singles' Day", "Global", "Online promotions, especially on marketplaces."],
+        [add(thanks, 1), "Black Friday", "Europe", "Heavy promotion week: watch who discounts and how hard."],
+        [add(thanks, 4), "Cyber Monday", "Europe", "Last big promotion before Christmas: bundles vs. discounts."],
+        [new Date(y, 11, 1), "Advent and gift-guide season", "Europe", "Gift guides and advent calendars peak until Christmas."],
+        [new Date(y, 11, 25), "Christmas", "Europe", "Gifting content peaks in the two weeks before."],
+        [new Date(y, 11, 26), "Boxing Day sales", "UK", "UK pharmacy and beauty retailers discount heavily."]
+      ].forEach(([d, moment, market, opportunity]) => out.push({ date: iso(d), moment, market, opportunity, auto: true }));
+    });
+    const keyOf = c => `${c.date}|${String(c.moment).toLowerCase().slice(0, 12)}`;
+    const extraKeys = new Set((extra || []).map(keyOf));
+    const from = iso(add(today, -7)), to = iso(add(today, 365));
+    return [...(extra || []), ...out.filter(c => !extraKeys.has(keyOf(c)) && !(extra || []).some(e => e.date === c.date))]
+      .filter(c => c.date >= from && c.date <= to).sort((a, b) => a.date.localeCompare(b.date));
+  }
+
   window.loadPulseData = async function () {
-    const [tabs, posts, status] = await Promise.all([
+    const [tabs, posts, status, hist] = await Promise.all([
       Promise.all(TABS.map(t => loadTab(t))),
       Promise.all(PLATFORMS.map(p => loadTab(`posts/${p}`))),
-      Promise.all(SOURCES.map(s => loadJSON(`data/status/${s}.json`)))
+      Promise.all(SOURCES.map(s => loadJSON(`data/status/${s}.json`))),
+      loadTab("history/weekly")
     ]);
     const data = { kpis: [], products: [] };
     TABS.forEach((t, i) => { data[t] = tabs[i].rows; });
-    data.accounts = data.accounts.filter(a => a.platform !== "TikTok");
+    data.history = hist.rows;
+    data.accounts = data.accounts.filter(a => a.platform !== "TikTok");  // TikTok counts are shown live by TikTok
     // Google News feed links ("/rss/articles/") are meant for feed readers and can show a
     // "We're sorry" page in a browser. The normal web link opens the article itself.
-    data.news.forEach(n => { if (n.link) n.link = n.link.replace("news.google.com/rss/articles/", "news.google.com/articles/"); });  // TikTok counts are shown live by TikTok
+    data.news.forEach(n => { if (n.link) n.link = n.link.replace("news.google.com/rss/articles/", "news.google.com/articles/"); });
+    data.calendar = buildCalendar(data.calendar);
     data.competitor_posts = posts.flatMap(r => r.rows);
     data.status = {};
     SOURCES.forEach((s, i) => { if (status[i]) data.status[s] = status[i]; });
