@@ -30,7 +30,7 @@ jobs:
         run: |
           git config user.name "ignite-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add ignite/data/posts/youtube.csv ignite/data/status/youtube.json
+          git add ignite/data/posts/youtube.csv ignite/data/status/youtube.json ignite/data/accounts.csv
           git diff --cached --quiet && exit 0
           git commit -m "YouTube refresh $(date -u +'%Y-%m-%d %H:%M UTC')"
           for i in 1 2 3; do git pull --rebase && git push && break; sleep 5; done
