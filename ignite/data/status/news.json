@@ -2,8 +2,8 @@
  "source": "News",
  "engine": "cloud",
  "schedule": "Every hour",
- "last_run": "2026-11-26T20:15:21Z",
+ "last_run": "2026-11-27T00:53:45Z",
  "ok": true,
  "items": 146,
- "message": "23 new articles (20 Google News, 3 Bing and trade press). Sources answering: Google 36/36, Bing 14/16, trade press 3/4"
+ "message": "0 new articles (0 Google News, 0 Bing and trade press). Sources answering: Google 36/36, Bing 13/16, trade press 2/4"
 }
