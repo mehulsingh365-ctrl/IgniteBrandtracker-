@@ -2,8 +2,8 @@
  "source": "Brand interest (Wikipedia)",
  "engine": "cloud",
  "schedule": "Once a day",
- "last_run": "2026-11-26T20:12:01Z",
+ "last_run": "2026-11-27T11:04:41Z",
  "ok": true,
- "items": 545,
+ "items": 546,
  "message": "5 of 8 brands found on Wikipedia; 18 weeks of history; no page for La Roche-Posay, Klorane, The Ordinary"
 }
