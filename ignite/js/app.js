@@ -391,7 +391,7 @@
     const ch = x => x.prev ? Math.round((x.v / x.prev - 1) * 100) : null;
     const mover = [...data].filter(x => ch(x) !== null && x.v >= 300).sort((a, b) => Math.abs(ch(b)) - Math.abs(ch(a)))[0];
     const me = data.find(x => x.brand === FOCUS);
-    $("interestSowhat").innerHTML = `<strong>${esc(data[0].brand)}</strong> is looked up most (${fmt(data[0].v)} page views in 30 days).${me ? ` Vichy: ${fmt(me.v)}${ch(me) !== null ? ` (${ch(me) >= 0 ? "+" : ""}${ch(me)}% vs the 30 days before)` : ""}.` : ""}${mover && mover.brand !== FOCUS ? ` Biggest change: ${esc(mover.brand)} ${ch(mover) >= 0 ? "+" : ""}${ch(mover)}%.` : ""} <span class="muted">Data up to ${dateFmt(last)}.</span>`;
+    $("interestSowhat").innerHTML = `<strong>${esc(data[0].brand)}</strong> is looked up most (${fmt(data[0].v)} page views in 30 days).${me ? ` Vichy: ${fmt(me.v)}${ch(me) !== null ? ` (${ch(me) >= 0 ? "+" : ""}${ch(me)}% vs the 30 days before)` : ""}.` : ""}${mover && mover.brand !== FOCUS ? ` Biggest change: ${esc(mover.brand)} ${ch(mover) >= 0 ? "+" : ""}${ch(mover)}%.` : ""} <span class="muted">Data up to ${dateFmt(last)}.</span>${(() => { const all = Object.keys(window.PULSE_CONFIG.brandColors || {}).filter(b => DATA.competitor_posts.some(p => p.brand === b)); const missing = all.filter(b => !brands.includes(b)); return missing.length ? ` <span class="muted">Not shown: ${missing.map(esc).join(", ")} (no Wikipedia page of their own).</span>` : ""; })()}`;
   }
 
   function bars(rows, label) {
