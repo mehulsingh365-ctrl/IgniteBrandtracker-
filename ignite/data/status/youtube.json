@@ -2,7 +2,7 @@
  "source": "YouTube",
  "engine": "cloud",
  "schedule": "Every hour",
- "last_run": "2026-11-26T20:15:35Z",
+ "last_run": "2026-11-27T02:15:02Z",
  "ok": true,
  "items": 13,
  "message": "Refreshed 13 videos from 7 brands; no YouTube channel tracked yet for Bioderma"
